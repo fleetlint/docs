@@ -35,6 +35,10 @@ make check
 
 `make lint` fails when the generated pages differ from what the installed fleetlint would write, so the site cannot silently describe other rules than the release it documents.
 
+## Dependency updates
+
+Renovate reads `mise.toml` for the toolchain, the pinned actions in the workflows, the hook revisions in `.pre-commit-config.yaml`, and the Pagefind version in the Makefile through its `# renovate:` comment.
+
 ## Publishing
 
 A push to `main` builds the site and publishes it to GitHub Pages (`.github/workflows/pages.yml`). The site documents the latest release only.

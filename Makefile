@@ -8,6 +8,7 @@ SHELL := bash
 # The site documents this release of fleetlint; `make gen` needs that version on the PATH.
 # It is a branch until fleetlint has its first tag: set it to the tag then.
 FLEETLINT_VERSION ?= main
+# renovate: datasource=npm depName=pagefind
 PAGEFIND_VERSION  ?= 1.5.2
 
 .PHONY: help tools gen fmt lint test cover audit build search serve check-fast check
