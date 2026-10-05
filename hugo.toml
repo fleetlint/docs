@@ -15,65 +15,121 @@ disableKinds = ["taxonomy", "term", "RSS"]
 
 [[menu.main]]
   name = "Getting started"
+  identifier = "getting-started"
   pageRef = "/getting-started"
   weight = 10
+
+[[menu.main]]
+  name = "Concepts"
+  identifier = "concepts"
+  weight = 20
+
 [[menu.main]]
   name = "The baseline"
+  parent = "concepts"
   pageRef = "/baseline"
-  weight = 20
+  weight = 21
+
 [[menu.main]]
   name = "Stack profiles"
+  parent = "concepts"
   pageRef = "/stacks"
-  weight = 30
+  weight = 22
+
 [[menu.main]]
   name = "Slop catalog"
+  parent = "concepts"
   pageRef = "/slop"
-  weight = 40
+  weight = 23
+
+[[menu.main]]
+  name = "Rules"
+  identifier = "rules"
+  weight = 30
+
 [[menu.main]]
   name = "Rule catalog"
+  parent = "rules"
   pageRef = "/rule-catalog"
-  weight = 50
+  weight = 31
+
 [[menu.main]]
   name = "Rule reference"
+  parent = "rules"
   pageRef = "/rules"
-  weight = 55
+  weight = 32
+
+[[menu.main]]
+  name = "Customization"
+  identifier = "customization"
+  weight = 40
+
 [[menu.main]]
   name = "Configuration"
+  parent = "customization"
   pageRef = "/configuration"
-  weight = 60
+  weight = 41
+
 [[menu.main]]
   name = "Organisations"
+  parent = "customization"
   pageRef = "/organisations"
-  weight = 70
+  weight = 42
+
 [[menu.main]]
   name = "Fleet mode"
+  parent = "customization"
   pageRef = "/fleet"
-  weight = 80
-[[menu.main]]
-  name = "Writing rules"
-  pageRef = "/writing-rules"
-  weight = 90
-[[menu.main]]
-  name = "CEL reference"
-  pageRef = "/cel-reference"
-  weight = 100
+  weight = 43
+
 [[menu.main]]
   name = "Integrations"
+  parent = "customization"
   pageRef = "/integrations"
-  weight = 110
+  weight = 44
+
+[[menu.main]]
+  name = "Extension"
+  identifier = "extension"
+  weight = 50
+
+[[menu.main]]
+  name = "Writing rules"
+  parent = "extension"
+  pageRef = "/writing-rules"
+  weight = 51
+
+[[menu.main]]
+  name = "CEL reference"
+  parent = "extension"
+  pageRef = "/cel-reference"
+  weight = 52
+
+[[menu.main]]
+  name = "About"
+  identifier = "about"
+  weight = 60
+
 [[menu.main]]
   name = "Comparison"
+  parent = "about"
   pageRef = "/comparison"
-  weight = 120
+  weight = 61
+
 [[menu.main]]
   name = "Demo"
+  parent = "about"
   pageRef = "/demo"
-  weight = 130
+  weight = 62
+
 [[menu.main]]
   name = "Project"
+  parent = "about"
   pageRef = "/project"
-  weight = 140
+  weight = 63
+
 [[menu.main]]
   name = "Search"
+  identifier = "search"
   pageRef = "/search"
-  weight = 150
+  weight = 70

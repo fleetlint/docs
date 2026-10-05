@@ -1,10 +1,19 @@
 <nav class="side" aria-label="Documentation">
-  <ul>
   {{- $current := . -}}
+  {{- define "partials/nav-link.html" }}
+    {{- $active := or ($.current.IsMenuCurrent "main" $.entry) ($.current.HasMenuCurrent "main" $.entry) -}}
+    {{- with $.entry.Page }}{{ if and (eq $.current.Section .Section) (ne .Section "") (eq .Kind "section") }}{{ $active = true }}{{ end }}{{ end }}
+    <li><a href="{{ $.entry.URL }}"{{ if $active }} aria-current="page"{{ end }}>{{ $.entry.Name }}</a></li>
+  {{- end }}
+  <ul>
   {{- range site.Menus.main }}
-    {{- $active := or ($current.IsMenuCurrent "main" .) ($current.HasMenuCurrent "main" .) -}}
-    {{- with .Page }}{{ if and (eq $current.Section .Section) (ne .Section "") (eq .Kind "section") }}{{ $active = true }}{{ end }}{{ end }}
-    <li><a href="{{ .URL }}"{{ if $active }} aria-current="page"{{ end }}>{{ .Name }}</a></li>
+    {{- if .HasChildren }}
+    <li class="group"><span>{{ .Name }}</span>
+      <ul>
+      {{- range .Children }}{{ partial "nav-link.html" (dict "current" $current "entry" .) }}{{ end }}
+      </ul>
+    </li>
+    {{- else }}{{ partial "nav-link.html" (dict "current" $current "entry" .) }}{{ end }}
   {{- end }}
   </ul>
 </nav>
