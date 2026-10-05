@@ -4,7 +4,8 @@
     "config:recommended",
     "helpers:pinGitHubActionDigests",
     ":semanticCommits",
-    "customManagers:makefileVersions"
+    "customManagers:makefileVersions",
+    "customManagers:githubActionsVersions"
   ],
   "pre-commit": {
     "enabled": true
