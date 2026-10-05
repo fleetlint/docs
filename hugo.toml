@@ -1,0 +1,79 @@
+baseURL = "https://fleetlint.org/"
+title = "fleetlint"
+locale = "en"
+disableKinds = ["taxonomy", "term", "RSS"]
+
+[params]
+  description = "Policy for a fleet of repositories: checks how a repository is set up and how to close each gap."
+  source = "https://github.com/fleetlint/docs"
+
+[markup.highlight]
+  codeFences = false   # plain code blocks: no highlighter theme to keep in step with the color scheme
+
+[markup.goldmark.parser]
+  autoHeadingIDType = "github"
+
+[[menu.main]]
+  name = "Getting started"
+  pageRef = "/getting-started"
+  weight = 10
+[[menu.main]]
+  name = "The baseline"
+  pageRef = "/baseline"
+  weight = 20
+[[menu.main]]
+  name = "Stack profiles"
+  pageRef = "/stacks"
+  weight = 30
+[[menu.main]]
+  name = "Slop catalog"
+  pageRef = "/slop"
+  weight = 40
+[[menu.main]]
+  name = "Rule catalog"
+  pageRef = "/rule-catalog"
+  weight = 50
+[[menu.main]]
+  name = "Rule reference"
+  pageRef = "/rules"
+  weight = 55
+[[menu.main]]
+  name = "Configuration"
+  pageRef = "/configuration"
+  weight = 60
+[[menu.main]]
+  name = "Organisations"
+  pageRef = "/organisations"
+  weight = 70
+[[menu.main]]
+  name = "Fleet mode"
+  pageRef = "/fleet"
+  weight = 80
+[[menu.main]]
+  name = "Writing rules"
+  pageRef = "/writing-rules"
+  weight = 90
+[[menu.main]]
+  name = "CEL reference"
+  pageRef = "/cel-reference"
+  weight = 100
+[[menu.main]]
+  name = "Integrations"
+  pageRef = "/integrations"
+  weight = 110
+[[menu.main]]
+  name = "Comparison"
+  pageRef = "/comparison"
+  weight = 120
+[[menu.main]]
+  name = "Demo"
+  pageRef = "/demo"
+  weight = 130
+[[menu.main]]
+  name = "Project"
+  pageRef = "/project"
+  weight = 140
+[[menu.main]]
+  name = "Search"
+  pageRef = "/search"
+  weight = 150

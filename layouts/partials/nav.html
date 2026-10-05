@@ -1,0 +1,10 @@
+<nav class="side" aria-label="Documentation">
+  <ul>
+  {{- $current := . -}}
+  {{- range site.Menus.main }}
+    {{- $active := or ($current.IsMenuCurrent "main" .) ($current.HasMenuCurrent "main" .) -}}
+    {{- with .Page }}{{ if and (eq $current.Section .Section) (ne .Section "") (eq .Kind "section") }}{{ $active = true }}{{ end }}{{ end }}
+    <li><a href="{{ .URL }}"{{ if $active }} aria-current="page"{{ end }}>{{ .Name }}</a></li>
+  {{- end }}
+  </ul>
+</nav>

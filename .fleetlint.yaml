@@ -1,0 +1,15 @@
+# .fleetlint.yaml: the documentation site is checked like any other repository.
+version: 1
+extends:
+  - fleetlint:recommended
+facts:
+  tier: 2
+  visibility: public
+  container: none
+rules:
+  quality/coverage-threshold:
+    enabled: false
+    reason: "a documentation site: the link check covers every page and there is no code to measure"
+  deps/vulnerability-scan:
+    enabled: false
+    reason: "no dependencies: Hugo renders Markdown with layouts from this repository"

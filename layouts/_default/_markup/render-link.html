@@ -1,0 +1,14 @@
+{{- /* Links between pages are written as relative .md paths, so they also work when the files are read on the forge. A link to a page that does not exist fails the build. */ -}}
+{{- $dest := .Destination -}}
+{{- $u := urls.Parse $dest -}}
+{{- if and (not $u.Scheme) (not $u.Host) (strings.HasSuffix $u.Path ".md") -}}
+  {{- $path := strings.TrimSuffix "/_index.md" $u.Path -}}
+  {{- with .Page.GetPage $path -}}
+    {{- $dest = .RelPermalink -}}
+    {{- with $u.Fragment }}{{ $dest = printf "%s#%s" $dest . }}{{ end -}}
+  {{- else -}}
+    {{- errorf "broken link %q in %s" .Destination .Page.File.Path -}}
+  {{- end -}}
+{{- end -}}
+<a href="{{ $dest | safeURL }}"{{ with .Title }} title="{{ . }}"{{ end }}>{{ .Text | safeHTML }}</a>
+{{- /* no trailing newline */ -}}

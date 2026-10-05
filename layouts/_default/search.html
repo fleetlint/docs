@@ -1,0 +1,13 @@
+{{ define "head" }}<link rel="stylesheet" href="{{ "pagefind/pagefind-ui.css" | relURL }}">{{ end }}
+{{ define "main" }}
+<article data-pagefind-ignore>
+{{ .Content }}
+<div id="search"></div>
+<noscript><p>Search needs JavaScript. Every other page works without it; the <a href="{{ "rule-catalog/" | relURL }}">rule catalog</a> lists all rules on one page.</p></noscript>
+<script src="{{ "pagefind/pagefind-ui.js" | relURL }}"></script>
+<script>
+  if (window.PagefindUI) { new PagefindUI({ element: "#search", showSubResults: true }); }
+  else { document.getElementById("search").textContent = "The search index is built when the site is deployed; it is not part of a local preview."; }
+</script>
+</article>
+{{ end }}

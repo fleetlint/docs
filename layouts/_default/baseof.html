@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="{{ site.Language.Locale }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{{- $title := .Title -}}
+{{- if not $title }}{{ with findRESubmatch `(?m)^# (.+)$` .RawContent 1 }}{{ $title = index (index . 0) 1 }}{{ end }}{{ end -}}
+<title>{{ if and $title (ne $title site.Title) }}{{ $title }} · {{ end }}{{ site.Title }}</title>
+<meta name="description" content="{{ .Description | default site.Params.description }}">
+<link rel="canonical" href="{{ .Permalink }}">
+{{ $css := resources.Get "style.css" | fingerprint }}<link rel="stylesheet" href="{{ $css.RelPermalink }}">
+{{ block "head" . }}{{ end }}
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top">
+  <a class="brand" href="{{ site.Home.RelPermalink }}">fleetlint</a>
+  <span class="tagline">Policy for a fleet of repositories</span>
+  <a class="repo" href="https://github.com/fleetlint/fleetlint">GitHub</a>
+</header>
+<div class="layout">
+  {{ partial "nav.html" . }}
+  <main id="content" data-pagefind-body>
+    {{ block "main" . }}{{ end }}
+  </main>
+</div>
+<footer class="bottom">
+  <span>MIT licensed. Documents the latest release.</span>
+  {{ with .File }}<a href="{{ site.Params.source }}/blob/main/content/{{ .Path }}">Source of this page</a>{{ end }}
+</footer>
+</body>
+</html>
