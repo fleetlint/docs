@@ -9,7 +9,7 @@ make serve     # preview at http://localhost:1313
 make check     # generated pages current, site builds without warnings, every link resolves
 ```
 
-Needs [Hugo](https://gohugo.io) (extended), Python 3 for the link check, `gitleaks`, and `fleetlint` on the PATH. `make search` adds the search index and needs Node.
+The toolchain is pinned in `mise.toml`: Hugo, Node (for the search index), Python (for the link check), Go and gitleaks. With [mise](https://mise.jdx.dev), `mise install` provides all of them; without it, install those versions yourself. `make tools` then installs fleetlint. The workflows read the same file.
 
 ## Layout
 

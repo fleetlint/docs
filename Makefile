@@ -4,9 +4,10 @@ SHELL := bash
 .ONESHELL:
 .DEFAULT_GOAL := check-fast
 
+# Hugo, Node, Python, Go and gitleaks are pinned in mise.toml (`mise install`).
 # The site documents this release of fleetlint; `make gen` needs that version on the PATH.
+# It is a branch until fleetlint has its first tag: set it to the tag then.
 FLEETLINT_VERSION ?= main
-HUGO_VERSION      ?= 0.166.0
 PAGEFIND_VERSION  ?= 1.5.2
 
 .PHONY: help tools gen fmt lint test cover audit build search serve check-fast check
@@ -14,7 +15,7 @@ PAGEFIND_VERSION  ?= 1.5.2
 help: ## list targets
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*##' '{printf "  %-12s %s\n", $$1, $$2}'
 
-tools: ## install the pinned tools: fleetlint (hugo and gitleaks come from their own installers)
+tools: ## install fleetlint; everything else comes from mise.toml
 	go install github.com/fleetlint/fleetlint/cmd/fleetlint@$(FLEETLINT_VERSION)
 
 gen: ## regenerate the rule pages and the CEL reference from the catalog built into fleetlint

@@ -26,17 +26,8 @@ jobs:
         with:
           fetch-depth: 0          # diff-cover and gitleaks need history
           persist-credentials: false
-      - uses: peaceiris/actions-hugo@2752ce1d29631191ea3f27c23495fa06139a5b78 # v3.2.1
-        with:
-          hugo-version: "0.166.0"
-          extended: true
-      - name: Shared tools (gitleaks, syft, diff-cover)
-        run: |
-          set -euo pipefail
-          curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/master/install.sh | sh -s -- -b "$HOME/.local/bin"
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b "$HOME/.local/bin"
-          pipx install diff-cover || pip install --user diff-cover
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        # installs the versions in mise.toml: hugo, node, python, go, gitleaks
       - name: fleetlint (the check target runs it; pin the version you use)
         run: |
           go install github.com/fleetlint/fleetlint/cmd/fleetlint@latest
