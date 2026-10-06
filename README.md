@@ -41,7 +41,7 @@ Renovate reads `mise.toml` for the toolchain, the pinned actions in the workflow
 
 ## Publishing
 
-A push to `main` builds the site and publishes it to GitHub Pages (`.github/workflows/pages.yml`). The site documents the latest release only.
+A push to `main` (and a nightly run, for the demo) builds the complete site into the `site` workflow artifact (`.github/workflows/site.yml`): Hugo output, the fleet report under `demo/report/`, the search index. The fleetlint.org deployment takes it from there; nothing in this repository publishes. The site documents the latest release only.
 
 ## License
 

@@ -1,5 +1,5 @@
 # The demo at fleetlint.org/demo/report/: fleetlint's fleet report over its own repositories,
-# rebuilt with every site deployment and nightly (see .github/workflows/pages.yml).
+# rebuilt with every site build and nightly (see .github/workflows/site.yml).
 version: 1
 cache: .fleet-cache
 repos:

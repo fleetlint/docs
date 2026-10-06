@@ -1,8 +1,8 @@
-# Builds the site with Hugo, adds the fleet report over the fleetlint repositories
-# as the demo, adds the Pagefind search index and publishes to GitHub Pages
-# (fleetlint.org via the CNAME file). On every push to main, nightly for the demo, and on demand.
-# Has not run on a real runner yet.
-name: pages
+# Builds the complete site (Hugo, the fleet report over the fleetlint repositories
+# as the demo, the Pagefind search index) and keeps it as the `site` artifact, which
+# the fleetlint.org deployment picks up. On every push to main, nightly for the demo,
+# and on demand.
+name: site
 on:
   push:
     branches: [main]
@@ -14,20 +14,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: pages
+  group: site
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -45,8 +38,9 @@ jobs:
           make tools demo
       - name: Search index
         run: make search-index
-      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
+          name: site
           path: public
-      - id: deploy
-        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+          if-no-files-found: error
+          retention-days: 14

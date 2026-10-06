@@ -13,7 +13,7 @@ import re
 import sys
 
 SITE = "https://fleetlint.org"
-# Added to public/ by `make demo` in the Pages workflow, not by the Hugo build this checks.
+# Added to public/ by `make demo` in the site workflow, not by the Hugo build this checks.
 BUILT_SEPARATELY = {"/demo/report/"}
 root = sys.argv[1] if len(sys.argv) > 1 else "public"
 
