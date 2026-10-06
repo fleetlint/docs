@@ -45,6 +45,7 @@ Severity is the default; repositories may raise it freely and lower it with a re
 | `lint/python-config` | warning | `[tool.ruff]` plus mypy/pyright strict | done |
 | `lint/rust-config` | warning | `[lints]` table in Cargo.toml | done |
 | `lint/node-config` | warning | eslint flat config and `strict: true` tsconfig | done |
+| `lint/hugo-strict-build` | warning (hugo) | the task runner, a hook or CI runs `hugo --panicOnWarning` (outcome rule) | done |
 | `lint/kotlin-config` | warning | detekt or ktlint configured | done |
 | `lint/kotlin-detekt-strict` | warning | detekt sets `active: true` for SwallowedException, TooGenericExceptionCaught, EmptyCatchBlock, LongMethod, CognitiveComplexMethod; one finding per missing rule | done |
 | `lint/flutter-config` | warning | `analysis_options.yaml` with `very_good_analysis` or `flutter_lints` | done |

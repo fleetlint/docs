@@ -30,6 +30,6 @@ jobs:
         # installs the versions in mise.toml: hugo, node, python, go, gitleaks
       - name: fleetlint (the check target runs it; pin the version you use)
         run: |
-          go install github.com/fleetlint/fleetlint/cmd/fleetlint@602212f38f4bdb76bd1249327c1c00eed256ba99
+          go install github.com/fleetlint/fleetlint/cmd/fleetlint@08fb488b75edd199949460d82c19825319b79957
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - run: make check

@@ -1,7 +1,7 @@
 ---
 title: "Stack profiles"
 weight: 30
-description: "The concrete tools and settings for Go, Python, Rust, Node, Kotlin and Flutter."
+description: "The concrete tools and settings for Go, Python, Rust, Node, Kotlin, Flutter and Hugo sites."
 ---
 
 # Stack profiles
@@ -107,6 +107,18 @@ The concrete tools and settings behind [the baseline](baseline.md) for each stac
 - **Slop guards:** `flutter_style_todos`, `avoid_print`, `require_trailing_commas` via very_good_analysis; every `// ignore:` needs a reason on the line above; `jscpd` for duplication; the `mutation_test` package for mutation testing.
 - **Benchmarks:** `benchmark_harness` for pure Dart logic; `integration_test` with `traceAction` for frame timings of key screens; app-size budget from `flutter build --analyze-size`.
 - **UI:** widget tests with `meetsGuideline(textContrastGuideline)`, `labeledTapTargetGuideline`, `androidTapTargetGuideline` and `iOSTapTargetGuideline`; golden tests in light/dark and large text; `flutter gen-l10n` with `untranslated-messages-file` set, and `check` fails if that file is not empty.
+
+## Hugo / static sites
+
+A documentation or marketing site is a repository like any other: it has a build that can break, links that can rot and a deployment that should be reproducible. fleetlint recognises a site by `hugo.toml`/`hugo.yaml`/`hugo.json` (also under `config/_default/`), or a legacy `config.toml` naming the `baseURL` next to a `content/` directory.
+
+- **Toolchain:** pin Hugo (`mise.toml`, `.tool-versions`, or the version in the check workflow); the extended build when the site uses SCSS. The dev container uses the `hugo` feature; the `docker`/`podman` modes use `ghcr.io/gohugoio/hugo`.
+- **Build (`lint`):** `hugo --quiet --panicOnWarning --destination <tmp>`: a missing layout, a broken `ref`/`relref` or a deprecated setting fails the build instead of printing a warning. Checked by `lint/hugo-strict-build`.
+- **Tests:** a link and anchor check over the built site (every `href` resolves, every `#fragment` exists); `markdownlint` on the content. Hugo already fails on a link to a Markdown file that does not exist when `refLinksErrorLevel = "ERROR"`.
+- **Hooks:** the build check scoped to content, layouts, assets, static and configuration; `markdownlint --fix`.
+- **CI:** `peaceiris/actions-hugo` with a pinned `HUGO_VERSION` (Renovate bumps it), then the task runner's `check`.
+- **Release:** none; a site ships by deployment. The release rules stay not-applicable while no tag-triggered workflow exists.
+- **Slop guards:** `markdownlint` for structure, the link check for dead references; no generated `public/` or `resources/_gen` tracked (`.gitignore`).
 
 ## Shared tools (all stacks)
 

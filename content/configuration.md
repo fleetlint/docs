@@ -80,7 +80,7 @@ fleetlint detects these on every run; `fleetlint facts` prints them with where e
 |---|---|---|
 | `tier` | `1` production or public, `2` a tool you rely on, `3` an experiment | public or has a release pipeline: 1; otherwise 3 |
 | `visibility` | `public`, `private` | not detected by `check`; `init` asks the forge once and writes it |
-| `stacks` | `go`, `python`, `rust`, `node`, `kotlin`, `flutter` | manifests at the root |
+| `stacks` | `go`, `python`, `rust`, `node`, `kotlin`, `flutter`, `hugo` | manifests at the root |
 | `forge` | `github`, `gitea`, `gitlab` | the `origin` remote |
 | `taskrunner` | `make`, `just`, `task`, `npm-scripts`, `gradle` | the first of Makefile, justfile, Taskfile, Gradle, package.json scripts |
 | `container` | `none`, `devcontainer`, `docker`, `podman` | `devcontainer` when a devcontainer.json exists, else `none` |

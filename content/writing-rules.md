@@ -44,11 +44,15 @@ rules:
         - untrack: "*"                                  # git rm --cached the rule's findings
           gitignore: ["*.log"]                          # append missing patterns
         - set: {file: package.json, key: license, value: "{license}"}   # add a value to an existing JSON or TOML file
+        - append: {file: pyproject.toml, template: python/ruff.toml, unless: '(?m)^\[tool\.ruff\]'}   # add a block to an existing TOML or YAML file
+        - merge: {file: tsconfig.json, template: node/tsconfig-strict.json}   # add the keys an existing JSON file lacks
     params: { key: value }     # available to the expression as params.key
     refs: ["docs/baseline.md#documentation"]
 ```
 
 `set` adds one string to a file that exists and never changes a key that is already there. JSON takes a top-level key, TOML takes `table.key` in a table written with a `[table]` header. The edit is kept only if the file afterwards parses to exactly the old content plus the key; files it cannot edit that way (JSON with comments, inline tables) are left to a person. `{license}` is the SPDX identifier of the repository's LICENSE file when its text is one recognised license; without it the action does nothing. GNU licenses yield no identifier, because the text does not say whether `-only` or `-or-later` applies.
+
+`append` adds a template's text to the end of an existing TOML or YAML file, unless the file already matches the `unless` regular expression; the result must still parse, otherwise nothing is written and the run reports it. This is how `[tool.ruff]` lands in a pyproject.toml or `[lints]` in a Cargo.toml without rewriting what the project wrote. `merge` adds to an existing JSON file the keys of a JSON template it lacks, recursively, keeping every value the file has and its indentation; a file that is not strict JSON (tsconfig.json with comments) is reported, not rewritten. Neither creates the file.
 
 `{taskrunner}` is the runner file for the repository's task runner (`Makefile`, `justfile` or `Taskfile.yml`), written with the container switch when `repo.container` is not `none`. `{stack}/devcontainer.json` is generated for all stacks, and only when `repo.container` is `devcontainer`; `{stack}/check.yml` and the hooks call the repository's runner and follow the container setting. A `{stack}/pre-commit-config.yaml` or `{stack}/check.yml` template is assembled: the shared part (hygiene, secret scan, commit messages, shell, the pre-push check), then the hooks or toolchain of the root stack, of any second stack in the same directory, and of each nested project. Like every template it is only written when the file does not exist; an existing file is never merged into.
 
