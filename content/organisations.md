@@ -44,6 +44,33 @@ extends:
 
 A catalog loaded over https or git can add and tighten rules, use the built-in fix templates and every function in [the CEL reference](cel-reference.md). It cannot declare rules that execute commands; only a repository's own configuration and catalogs on a local path can. How rules are written is in [writing rules](writing-rules.md).
 
+## What applies when
+
+A repository's effective rule set is computed in one pass, and the result does not depend on anything but the files involved:
+
+1. **`extends` in written order.** With a `sources` file the order is fixed instead: presets, `org`, `team/*`, then catalogs the repository names directly.
+2. **For each catalog, its `includes` first** (depth-first, in the listed order), then the catalog itself.
+3. **Within a catalog, `rules:` in list order**: inline definitions and `use:` selections, the latter expanded from the catalog's own `rules/` directory first and the catalog source's library second. Then the catalog's `overrides:`, patterns before exact ids.
+4. **Last, the repository**: its `rules:` block, exceptions and baseline.
+
+A rule's identity is its id. What happens when an id appears twice:
+
+| Situation | Result |
+|---|---|
+| two inline definitions in one catalog | error |
+| inline definition and a `use:` selecting the same id, in one catalog | the inline definition; this is how one rule of a family glob is replaced |
+| `use:` selects a rule that is already loaded (from an include or an earlier `extends` entry) | the rule stays as first loaded, with that catalog's layer and source; nothing is redefined |
+| inline definition of an id that is already loaded | **replaces** it wholesale, keeping the earlier severity floor. Refused if the earlier definition is locked or the new severity is below its floor; a lower severity across layers is recorded as *weakened* and shows in every report |
+| two catalogs select the same library rule | loaded once, from the first |
+
+Three ways to change a rule you did not write:
+
+- **Extend without restating** it: `overrides:`. Severity or `raise`, `params`, `accept` (which *adds* satisfiers to an outcome rule, the usual way to recognise your own tool), `when` and `tiers`, `locked`, `min_severity`, `exceptions`. Overrides reach rules from includes, from earlier `extends` entries and from this catalog's own `use:` selections; they cannot target a rule the same catalog defines inline, and they cannot change an expression.
+- **Overwrite**: define the id inline in a later catalog. Everything about the rule comes from your definition; the earlier one contributes only its lock and floor. Use this when the check itself has to be different.
+- **Run two in parallel**: give yours an id in your own family (`acme/go-config`) and keep or disable the built-in one (`overrides: {lint/go-config: {enabled: false, reason: "replaced by acme/go-config"}}`, which the report lists). Ids never merge: two rules that check similar things are two findings, two explain pages, two exceptions.
+
+A catalog that ships its own `rules/<family>/<name>.yaml` files (a commit-pinned git reference or an OCI artifact) selects from them with the same `use:`; a file there with a built-in id replaces the built-in definition for that catalog.
+
 ## Overrides in a catalog
 
 A catalog that builds on another does not restate a rule to change it. Next to `rules:` it lists `overrides:` for rules its `includes` brought in:

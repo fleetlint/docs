@@ -7,7 +7,7 @@ SHELL := bash
 # Hugo, Node, Python, Go and gitleaks are pinned in mise.toml (`mise install`).
 # The site documents this release of fleetlint; `make gen` needs that version on the PATH.
 # It is a branch until fleetlint has its first tag: set it to the tag then.
-FLEETLINT_VERSION ?= b4d31fca4496b673a33679a13d0c77ac45a9a06b   # the commit the generated pages come from; a tag after the next release
+FLEETLINT_VERSION ?= 753a5a516e1553a935048dfb5ecbfe2d4135e7bb   # the commit the generated pages come from; a tag after the next release
 # renovate: datasource=npm depName=pagefind
 PAGEFIND_VERSION  ?= 1.5.2
 
