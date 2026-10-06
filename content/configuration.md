@@ -47,6 +47,7 @@ The catalogs to apply, in order; a later one overrides an earlier one rule by ru
 | a path | a catalog file, or a directory of them, in the repository or next to it |
 | `https://…#sha256-<digest>` | a catalog over https; the digest is required |
 | `git+<url>//<path>@<tag or commit>` | a file in a git repository; a tag additionally needs `#sha256-<digest>`, a full commit SHA does not |
+| `oci://<registry>/<repository>:<tag>` or `@sha256:<digest>` | a catalog artifact in a container registry, signed with cosign; a tag needs `signers` in a sources file, see [organisations](organisations.md#catalogs-from-a-registry-oci-signatures-private-templates) |
 | `org`, `team/<name>` | a name from a `sources` file, see [organisations](organisations.md) |
 
 The presets build on each other: `minimal` holds the rules no repository should fail; `recommended` (the default) adds the task-runner contract, hooks, lint configuration, CI and release checks; `strict` is `recommended` with every warning an error, every informational rule a warning, and no exceptions on the security rules; `oss` is `recommended` with the `public/*` family switched on whatever the detected visibility, for repositories that are about to be published or live on a forge without a visibility API; `slop` is an add-on with the heuristic `slop/*` rules (see [slop](slop.md)).

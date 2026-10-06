@@ -112,6 +112,31 @@ extends: [fleetlint:recommended, org, team/platform]
 - Locks and severity floors hold across catalogs: a team catalog cannot redefine a locked organization rule or set a severity below the organization's `min_severity`, and the floor still binds the repository after a team redefines the rule. A later layer lowering an earlier layer's severity is allowed above the floor and is recorded: it appears under `weakened` in JSON and under "Lowered severities" in the fleet report with its layer, next to what repositories lowered themselves.
 - `--require org` and `--require team/platform` match the names from the sources file.
 
+## Catalogs from a registry: `oci://`, signatures, private templates
+
+An organization that runs a container registry can publish its catalog as an OCI artifact and sign it, so repositories pin a *signer* instead of a digest and a new catalog version needs no change in any repository:
+
+```sh
+oras push ghcr.io/acme/fleetlint-catalog:3.2.0 catalog.yaml templates/SECURITY.md templates/pre-commit/head.yaml
+cosign sign --new-bundle-format ghcr.io/acme/fleetlint-catalog@sha256:<digest>   # keyless, from the publishing workflow
+```
+
+```yaml
+# sources.yaml
+version: 1
+signers:
+  - issuer: https://token.actions.githubusercontent.com
+    subject_regex: '^https://github\.com/acme/standards/\.github/workflows/publish\.yml@refs/tags/v'
+catalogs:
+  org: oci://ghcr.io/acme/fleetlint-catalog:3
+  team/platform: oci://ghcr.io/acme/fleetlint-catalog@sha256:<digest>
+```
+
+- An `oci://<registry>/<repository>:<tag>` reference is accepted only when the sources file lists `signers`; a `@sha256:<digest>` reference needs none. When signers are listed, the signature is verified for every `oci://` catalog, digest or not.
+- A signer is an OIDC `issuer` plus the certificate `subject`, exact or as `subject_regex`. For GitHub Actions the subject is the workflow reference (`https://github.com/<owner>/<repo>/.github/workflows/<file>@refs/tags/<tag>`); for a person signing with `cosign sign` it is their e-mail with `issuer: https://accounts.google.com` or another identity provider. Verification uses the sigstore public-good instance: the certificate chain, the transparency-log entry or a signed timestamp, and the certificate's signed certificate timestamp. The bundle must be attached to the artifact in the sigstore bundle format (`cosign sign --new-bundle-format`, cosign 2.5 or later); the older `.sig` tag layout is not read.
+- Every layer of the artifact with an `org.opencontainers.image.title` annotation is a file, which is what `oras push <ref> <files...>` produces. Files named `*.yaml` at the root are catalogs, loaded in name order. Files under `templates/` are **fix templates that travel with the catalog**: `fleetlint fix` takes them before the preset's templates, so the organization's `SECURITY.md`, hook fragments or workflow head replace the public ones without a fork of fleetlint. The same trust applies: a template is written only from a catalog that was pinned or whose signature was verified.
+- The registry is read with the credentials docker or oras already stored (`docker login`, `oras login`, credential helpers). Registries on `localhost` are spoken to over plain http, as in tests.
+- A sources file itself cannot come from a registry: it is the trust anchor, so it stays a local path, an https URL with a digest or a git reference.
 
 ## The fleet view
 
