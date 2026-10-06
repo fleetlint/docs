@@ -46,6 +46,7 @@ Severity is the default; repositories may raise it freely and lower it with a re
 | `lint/rust-config` | warning | `[lints]` table in Cargo.toml | done |
 | `lint/node-config` | warning | eslint flat config and `strict: true` tsconfig | done |
 | `lint/kotlin-config` | warning | detekt or ktlint configured | done |
+| `lint/kotlin-detekt-strict` | warning | detekt sets `active: true` for SwallowedException, TooGenericExceptionCaught, EmptyCatchBlock, LongMethod, CognitiveComplexMethod; one finding per missing rule | done |
 | `lint/flutter-config` | warning | `analysis_options.yaml` with `very_good_analysis` or `flutter_lints` | done |
 | `lint/python-rules-enabled` | warning | ruff `select` contains E, F, I, B, UP, SIM, BLE, S, C90, T20 (or `ALL`); one finding per missing family | done |
 | `lint/node-strict-flags` | warning | tsconfig sets `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `noFallthroughCasesInSwitch`; one finding per missing flag | done |
@@ -61,6 +62,8 @@ Severity is the default; repositories may raise it freely and lower it with a re
 | `quality/no-slop-markers` | warning | README, docs and CHANGELOG contain none of the AI-filler phrases from the slop catalog; one finding per line | done |
 | `quality/policy-enforced` | warning (tiers 1–2) | `fleetlint check` runs as a hook, in the task runner or in a CI workflow | done |
 | `quality/coverage-threshold` | warning (tiers 1–2) | a coverage floor is enforced somewhere: Makefile `cover` recipe, `.codecov.yml`, `diff-cover --fail-under`, `pytest --cov-fail-under`, cargo-llvm-cov `--fail-under`, Jest `coverageThreshold` | done |
+| `quality/duplication-gate` | info (tier 1) | a duplication detector runs: golangci `dupl`, `jscpd`, PMD CPD, pylint `duplicate-code`, Sonar (outcome rule) | done |
+| `quality/mutation-gate` | info (tier 1) | a mutation testing tool runs on the core: gremlins, mutmut, cargo-mutants, Stryker, Pitest, mutation_test (outcome rule) | done |
 
 ## docs — the documents that must exist
 
@@ -90,6 +93,7 @@ Severity is the default; repositories may raise it freely and lower it with a re
 | `deps/vulnerability-scan` | warning (tiers 1–2) | the task runner or CI runs a vulnerability scanner (govulncheck, pip-audit, cargo deny/audit, npm/pnpm/yarn audit, osv-scanner, trivy, grype) | done |
 | `deps/license-check` | info (tier 1) | the task runner or CI checks dependency licenses (go-licenses, pip-licenses, cargo deny, license-checker, licensee, osv-scanner) | done |
 | `deps/install-scripts-disabled` | info (node, tiers 1–2) | install scripts are off or allowlisted (`.npmrc`, `.yarnrc.yml`, pnpm `onlyBuiltDependencies`, bun `trustedDependencies`) | done |
+| `deps/forks-documented` | info (tiers 1–2, when a fork or patch is used) | go.mod `replace`, Cargo `[patch]`, git URLs in package.json or Python requirements are documented in `FORKS.md`, a Forks section, or an inline comment | done |
 
 ## containers — repositories with a Dockerfile
 
@@ -123,6 +127,8 @@ Outcome rules: satisfiers list the known producers; a repository adds its own wi
 | `release/semver-tags` | warning | existing tags match `v?MAJOR.MINOR.PATCH[-pre]`; one finding per offending tag | done |
 | `release/checksums` | warning | a checksums file is produced (GoReleaser default, `sha256sum`, `shasum -a 256`) | done |
 | `release/changelog-in-release` | info | release notes come from git-cliff/GoReleaser changelog, not hand-written | done |
+| `release/api-compatibility` | info (tier 1, libraries) | the stack's API check runs against the previous release: gorelease/apidiff, griffe, cargo semver-checks, api-extractor, binary-compatibility-validator (outcome rule) | done |
+| `release/signed-tags` | warning (tier 1, when version tags exist) | the newest `params.recent` (3) version tags carry a PGP, SSH or X.509 signature | done |
 
 ## public — open-source repositories (`when: repo.public`)
 
