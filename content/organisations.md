@@ -137,6 +137,7 @@ catalogs:
 - Every layer of the artifact with an `org.opencontainers.image.title` annotation is a file, which is what `oras push <ref> <files...>` produces. Files named `*.yaml` at the root are catalogs, loaded in name order. Files under `templates/` are **fix templates that travel with the catalog**: `fleetlint fix` takes them before the preset's templates, so the organization's `SECURITY.md`, hook fragments or workflow head replace the public ones without a fork of fleetlint. The same trust applies: a template is written only from a catalog that was pinned or whose signature was verified.
 - The registry is read with the credentials docker or oras already stored (`docker login`, `oras login`, credential helpers). Registries on `localhost` are spoken to over plain http, as in tests.
 - A sources file itself cannot come from a registry: it is the trust anchor, so it stays a local path, an https URL with a digest or a git reference.
+- **Without a registry**, a `git+` catalog ships templates the same way: a `templates/` directory next to the catalog file travels with it when the reference is pinned to a full commit SHA (a tag reference's digest covers the catalog file only, so templates are not taken from it). `git+https://git.example.com/platform/standards.git//org/catalog.yaml@<commit>` with `org/templates/SECURITY.md` in that repository makes `fleetlint fix` write the organization's security policy.
 
 ## The fleet view
 
