@@ -8,7 +8,8 @@ description: "The rule format: predicates, outcome rules, fix actions, command r
 
 ## Where rules live
 
-- **Presets** ship in the binary and are referenced as `fleetlint:<name>`. Their source is the catalog repository, [fleetlint/catalog](https://github.com/fleetlint/catalog) (`presets/*.yaml`), of which every binary embeds one version (`fleetlint --version` and every report name it); a repository uses another version with `catalog: {version: …}` (see below).
+- **The library** is the catalog repository's `rules/` directory, [fleetlint/catalog](https://github.com/fleetlint/catalog): one rule per file at `rules/<family>/<name>.yaml`, the path spelling the id (`rules/lint/go-config.yaml` is `lint/go-config`). This is where a rule is read, changed or added; the rule pages on this site are generated from it.
+- **Presets** ship in the binary and are referenced as `fleetlint:<name>`. A preset defines no rules: it selects them from the library with `- use: <id>` or `- use: <family>/*` in its `rules:` list (`minimal`, `recommended`, `slop`), or adjusts an included preset with `overrides:` (`strict`, `oss`). Every binary embeds one version of the catalog (`fleetlint --version` and every report name it); a repository uses another version with `catalog: {version: …}` (see below).
 - **Your catalog** is a YAML file with the same format, hosted anywhere over https and referenced with its digest: `https://…/catalog.yaml#sha256-<hex>`. Get the digest with `fleetlint catalog digest catalog.yaml`. Fetches are https only, follow redirects only within the same host, time out after 20 seconds and refuse bodies over 2 MiB; the digest, not the transport, is what makes the content trusted. Every rule and partial must state its `severity`.
 - **A catalog in a git repository** is referenced as `git+<url>//<path>@<revision>`, for example `git+https://git.example.com/platform/standards.git//teams/mobile/catalog.yaml@v3.2.0#sha256-<hex>`. The URL is https or ssh and is fetched with the credentials git already has (credential helper, ssh agent), so private repositories work. The revision is a tag or a full commit SHA, never a branch. A commit SHA needs no digest; a tag can be moved, so it must carry `#sha256-<hex>` and a moved tag fails the digest check. Files over 2 MiB are refused and the fetch times out after two minutes. Like https catalogs, git catalogs are untrusted: they cannot declare `command` rules, and may include only presets, https catalogs and other git catalogs.
 - **Inline rules** go under `rules:` in `.fleetlint.yaml` with a `kind`.
@@ -148,7 +149,9 @@ Rules are data. The one exception in the presets is `quality/check-passes`, whic
 A catalog states the engine level it was written for:
 
 ```yaml
-metadata: {name: acme-baseline, version: 1.0.0, engine: 1}
+metadata: {name: acme-baseline, version: 1.0.0, engine: 2}
 ```
 
-The level counts the changes to what rules can rely on (facts, functions, fix actions) that an older catalog or an older fleetlint would not survive. A binary runs a range of levels. A catalog outside that range is refused when it is loaded, with one message that says whether to upgrade fleetlint or choose another catalog version, instead of its rules failing one by one. A catalog that states no level is loaded as it is.
+The level counts the changes to what rules can rely on (facts, functions, fix actions) that an older catalog or an older fleetlint would not survive. A binary runs a range of levels. A catalog outside that range is refused when it is loaded, with one message that says whether to upgrade fleetlint or choose another catalog version, instead of its rules failing one by one. A catalog that states no level is loaded as it is. The level is read before the rest of the document, so a catalog that uses a key this fleetlint does not know (level 2 introduced `use:`) is refused with that message, not with a parse error.
+
+Levels so far: 1, the first catalog format; 2, `use:` entries that select from the library.

@@ -10,7 +10,7 @@ A company has more than one layer of policy: what security or platform require o
 
 ## Your own catalog
 
-A catalog is a YAML file in the same format as the presets. It builds on them with `includes`, adds rules of its own, and adjusts the included ones with `overrides:`:
+A catalog is a YAML file in the same format as the presets. It builds on them with `includes`, adds rules of its own, selects single built-in rules with `use:`, and adjusts the included ones with `overrides:`:
 
 ```yaml
 apiVersion: fleetlint.org/v1
@@ -18,9 +18,11 @@ kind: Catalog
 metadata:
   name: acme-baseline
   version: 1.0.0
-  engine: 1
-  includes: ["fleetlint:recommended"]
+  engine: 2
+  includes: ["fleetlint:minimal"]
 rules:
+  - use: release/*                  # built-in rules, picked one family at a time
+  - use: slop/focused-tests         # or one by one, without taking all of recommended
   - id: acme/owner-file
     title: Every repository names its owning team
     kind: expr
