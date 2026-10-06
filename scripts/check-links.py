@@ -8,6 +8,7 @@ generated rule pages carry (they come from the catalog).
 import glob
 import html
 import os
+import posixpath
 import re
 import sys
 
@@ -32,6 +33,10 @@ for url, (text, _) in sorted(pages.items()):
         checked += 1
         target, _, fragment = href.partition("#")
         target = target or url
+        if not target.startswith("/"):
+            # A relative link, as the fleet report under /demo/ writes them.
+            target = posixpath.normpath(posixpath.join(posixpath.dirname(url), target))
+        target = re.sub(r"/index\.html$", "/", target)
         if target not in pages:
             broken.append(f"{url}: {href} (no such page)")
         elif fragment and fragment not in pages[target][1]:

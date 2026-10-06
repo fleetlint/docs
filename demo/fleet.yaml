@@ -1,4 +1,4 @@
-# The demo at fleetlint.org/demo/: fleetlint's fleet report over its own repositories,
+# The demo at fleetlint.org/demo/report/: fleetlint's fleet report over its own repositories,
 # rebuilt with every site deployment and nightly (see .github/workflows/pages.yml).
 version: 1
 cache: .fleet-cache

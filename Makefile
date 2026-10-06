@@ -45,8 +45,8 @@ search: build search-index ## build the site and add the search index (Pagefind)
 search-index: ## index whatever is in public/ (the demo report has no data-pagefind-body and stays out)
 	npx --yes pagefind@$(PAGEFIND_VERSION) --site public
 
-demo: ## the fleet report over the fleetlint repositories, into public/demo/ (needs network)
-	fleetlint fleet --repos demo/fleet.yaml --out public/demo --update
+demo: ## the fleet report over the fleetlint repositories, into public/demo/report/ (needs network)
+	fleetlint fleet --repos demo/fleet.yaml --out public/demo/report --update
 
 serve: ## preview at http://localhost:1313
 	hugo server
