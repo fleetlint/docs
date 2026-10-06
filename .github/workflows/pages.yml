@@ -1,10 +1,13 @@
-# Builds the site with Hugo, adds the Pagefind search index and publishes to GitHub Pages
-# (fleetlint.org via the CNAME file). On every push to main and on demand.
+# Builds the site with Hugo, adds the fleet report over the fleetlint repositories
+# as the demo, adds the Pagefind search index and publishes to GitHub Pages
+# (fleetlint.org via the CNAME file). On every push to main, nightly for the demo, and on demand.
 # Has not run on a real runner yet.
 name: pages
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: "17 4 * * *"
   workflow_dispatch:
 
 permissions:
@@ -31,8 +34,17 @@ jobs:
           persist-credentials: false
       - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         # installs the versions in mise.toml: hugo, node, python, go, gitleaks
-      - name: Build the site and the search index
-        run: make search
+      - name: Build the site
+        run: make build
+      - name: Fleet report over the fleetlint repositories (the demo)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # read access to this repository; the others are public
+        run: |
+          set -euo pipefail
+          git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+          make tools demo
+      - name: Search index
+        run: make search-index
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: public

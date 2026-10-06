@@ -11,7 +11,7 @@ FLEETLINT_VERSION ?= v0.1.0
 # renovate: datasource=npm depName=pagefind
 PAGEFIND_VERSION  ?= 1.5.2
 
-.PHONY: help tools gen fmt lint test cover audit build search serve check-fast check
+.PHONY: help tools gen fmt lint test cover audit build search serve check-fast check demo search-index
 
 help: ## list targets
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*##' '{printf "  %-12s %s\n", $$1, $$2}'
@@ -40,8 +40,13 @@ audit: ## secrets
 build: ## the site, minified, into public/
 	hugo --quiet --minify --destination public
 
-search: build ## add the search index (Pagefind) to public/
+search: build search-index ## build the site and add the search index (Pagefind) to public/
+
+search-index: ## index whatever is in public/ (the demo report has no data-pagefind-body and stays out)
 	npx --yes pagefind@$(PAGEFIND_VERSION) --site public
+
+demo: ## the fleet report over the fleetlint repositories, into public/demo/ (needs network)
+	fleetlint fleet --repos demo/fleet.yaml --out public/demo --update
 
 serve: ## preview at http://localhost:1313
 	hugo server

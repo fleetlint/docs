@@ -1,0 +1,11 @@
+# The demo at fleetlint.org/demo/: fleetlint's fleet report over its own repositories,
+# rebuilt with every site deployment and nightly (see .github/workflows/pages.yml).
+version: 1
+cache: .fleet-cache
+repos:
+  - url: https://github.com/fleetlint/fleetlint.git
+    team: core
+  - url: https://github.com/fleetlint/catalog.git
+    team: core
+  - url: https://github.com/fleetlint/docs.git
+    team: docs
