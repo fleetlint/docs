@@ -13,6 +13,8 @@ import re
 import sys
 
 SITE = "https://fleetlint.org"
+# Added to public/ by `make demo` in the Pages workflow, not by the Hugo build this checks.
+BUILT_SEPARATELY = {"/demo/report/"}
 root = sys.argv[1] if len(sys.argv) > 1 else "public"
 
 pages = {}
@@ -37,6 +39,8 @@ for url, (text, _) in sorted(pages.items()):
             # A relative link, as the fleet report under /demo/ writes them.
             target = posixpath.normpath(posixpath.join(posixpath.dirname(url), target))
         target = re.sub(r"/index\.html$", "/", target)
+        if target in BUILT_SEPARATELY and target not in pages:
+            continue
         if target not in pages:
             broken.append(f"{url}: {href} (no such page)")
         elif fragment and fragment not in pages[target][1]:
