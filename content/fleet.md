@@ -40,7 +40,7 @@ fleetlint fleet --from gitea:git.example.com/platform   # a Gitea or Forgejo ins
 fleetlint fleet --repos fleet.yaml --from github:acme   # in addition to a fleet file
 ```
 
-`--from` asks the forge's REST API for the owner's repositories and adds each as a `url` entry with the visibility the forge reports. Archived repositories and forks are skipped. Without a token only public repositories are listed; `GITHUB_TOKEN` (or `GH_TOKEN`) and `GITEA_TOKEN` are read from the environment and sent to that forge only. `GITHUB_API_URL` selects a GitHub Enterprise Server instance. Clones use git's own credentials and go to `--cache`, or to the user cache directory when none is given. fleetlint only reads: it never writes to the forge.
+`--from` asks the forge's REST API for the owner's repositories and adds each as a `url` entry with the visibility the forge reports. Archived repositories and forks are skipped. Without a token only public repositories are listed; `GITHUB_TOKEN` (or `GH_TOKEN`) and `GITEA_TOKEN` are read from the environment and sent to that forge only. `GITHUB_API_URL` selects a GitHub Enterprise Server instance. Clones of discovered repositories send the same token as an `Authorization` header scoped to the forge's host (the way `actions/checkout` does), so private repositories clone over https without further git setup; repositories from a fleet file use git's own credentials. Clones go to `--cache`, or to the user cache directory when none is given. fleetlint only reads: it never writes to the forge.
 
 ## Output directory
 
