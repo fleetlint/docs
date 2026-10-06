@@ -55,9 +55,12 @@ overrides:
   taskrunner/targets:     {params: {required: [lint, test, check]}}
   deps/vulnerability-scan: {accept: [{name: our-scanner, expr: 'text(taskrunner.file).contains("acme-scan")'}]}
   docs/adr-directory:     {enabled: false, reason: "decisions are kept in the wiki"}
+  public/license:         {when: "true"}          # run whatever the detected visibility
+  docs/architecture:      {tiers: [1, 2]}
 ```
 
 - `severity`, `params`, `accept` and `enabled` work as in a repository's `rules:` block, including the need for a `reason` when a rule is disabled or its severity lowered. Such changes appear in every report with the catalog's layer.
+- `when` and `tiers` replace the rule's applicability: `when: "true"` makes a conditional rule unconditional (this is how `fleetlint:oss` switches the `public/*` family on), `tiers` widens or narrows the tiers it applies to. A locked rule refuses both.
 - `locked`, `min_severity` and `exceptions` set the policy for everything loaded afterwards, and only ever tighten it: a rule an earlier catalog locked cannot be unlocked, disabled or lowered, a floor cannot be lowered, and exceptions that were forbidden cannot be allowed again.
 - The rule keeps the catalog it came from as its source, and follows that catalog's later improvements; `explain` and the reports name the catalog that set the policy.
 - An override for a rule that no earlier catalog defines is an error, as is one for a rule the same catalog defines.
