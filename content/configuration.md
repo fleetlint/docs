@@ -10,12 +10,24 @@ description: "The .fleetlint.yaml reference: catalogs, facts, scopes, rule overr
 
 ```yaml
 version: 1
-catalog: { version: v0.2.0 }        # another catalog version than the built-in one
+catalog: { version: v0.2.0 }        # the catalog version this repository runs with; one per run
+sources: git+https://git.example.com/org/standards.git//sources.yaml@<commit>   # the organisation's names, baseline and pin
 extends:
-  - fleetlint:recommended           # a built-in preset
-  - fleetlint:slop                  # the add-on with slop heuristics
-  - https://example.com/catalog.yaml#sha256-<digest>
-  - git+https://git.example.com/org/standards.git//catalog.yaml@<commit>
+  - fleetlint:slop                  # in addition to what the sources file extends
+  - team/platform                   # a name from the sources file
+overrides:                          # adjust rules the catalogs brought in
+  hooks/pre-push-check: { enabled: false, reason: "CI runs the full check" }
+  taskrunner/targets: { params: { required: [fmt, lint, test, check] } }
+  deps/vulnerability-scan:
+    accept:
+      - { name: our-scanner, expr: 'text(taskrunner.file).contains("acme-scan")' }
+rules:                              # the repository's own rules, or library rules it selects
+  - use: slop/commented-out-code
+  - id: acme/owner-file
+    kind: expr
+    severity: error
+    expr: file("OWNERS")
+    message: "OWNERS is missing"
 facts:
   tier: 1
   visibility: public
@@ -24,18 +36,14 @@ facts:
 scopes:
   - path: web
     facts: { stacks: [node] }
-rules:
-  hooks/pre-push-check: { enabled: false, reason: "CI runs the full check" }
-  taskrunner/targets: { params: { required: [fmt, lint, test, check] } }
-  deps/vulnerability-scan:
-    accept:
-      - { name: our-scanner, expr: 'text(taskrunner.file).contains("acme-scan")' }
 exceptions:
   - rule: ci/actions-pinned
     match: ".github/workflows/android.yml"
     reason: "flutter-action has no stable SHA"
     until: 2027-03-31
 ```
+
+The file has the same grammar as a catalog: `rules` defines or selects, `overrides` adjusts, `exceptions` excepts. The repository is the last catalog of the run, at the repository layer; what that allows and forbids is one page: [how rules combine](composition.md).
 
 ## extends
 
@@ -56,7 +64,7 @@ Catalogs referenced by https or git are fetched on every run. Presets need no ne
 
 ## catalog
 
-Every binary carries one version of the catalog; `fleetlint --version` names it. A repository can use another:
+Every binary carries one version of the catalog; `fleetlint --version` names it. A run uses exactly one version — for the presets, the rule library, and the fix templates — and every catalog in the run must build on that version:
 
 ```yaml
 version: 1
@@ -66,11 +74,11 @@ catalog:
 extends: [fleetlint:recommended]
 ```
 
-- `fleetlint:<preset>` and the fix templates then come from that version, for this repository only. Every report says `catalog v0.2.0 (<commit>), pinned in .fleetlint.yaml`.
+- Without `catalog:` the built-in version runs. A sources file may set the pin for every repository that uses it; a repository may repeat it, not change it (a different pin is an error).
+- An organisation or team catalog states in its `metadata.catalog` which version it builds on. If that is not the run's version, the run fails with both versions named; this is what makes the catalog mean the same rules in every repository.
 - The version is fetched once with git, using the credentials git already has, and kept in the user's cache directory (`FLEETLINT_CACHE_DIR` overrides the location, for CI). Later runs, hooks included, read the cache and need no network.
 - A commit SHA cannot move. A tag can; the report shows the commit a tag resolved to when it was fetched.
 - A catalog states the engine level it was written for (`metadata.engine`). A version this binary cannot run is refused with one message that says whether to upgrade fleetlint or choose another catalog version, instead of rules failing one by one.
-
 
 ## facts
 
@@ -98,40 +106,47 @@ A workspace member may carry its own `.fleetlint.yaml`:
 ```yaml
 version: 1
 facts: { tier: 2 }
-rules:
+overrides:
   lint/go-config: { enabled: false, reason: "uses the root .golangci.yml" }
-  taskrunner/targets: { severity: warning }
+  taskrunner/targets: { severity: warning, reason: "a prototype" }
 exceptions:
   - rule: repo/no-tracked-junk
     match: "testdata/*.log"
     reason: "parser fixtures"
 ```
 
-It applies to that scope only and may override facts, configure rules (disable with a reason, change severity, set params) and add exceptions. It cannot extend catalogs or define new rules; those belong in the root file, so there is one place where policy is resolved. Nested exceptions are reported alongside the root's and appear in the fleet policy notes.
+It applies to that scope only and may override facts, adjust rules (disable with a reason, change severity, set params, add accepts) and add exceptions. It cannot extend catalogs or define rules; those belong in the root file, so there is one place where policy is resolved. Nested exceptions are reported alongside the root's and appear in the fleet policy notes.
 
-## rules
+## overrides
 
-Per rule, any of:
+Adjustments to rules the catalogs brought in, keyed by rule id or by a pattern over ids (`"*"`, `"release/*"`; patterns apply first):
 
 | Key | Effect |
 |---|---|
-| `enabled: false` | turns the rule off; needs a `reason` |
-| `severity` | `error`, `warning` or `info`; lowering it needs a `reason` |
+| `enabled: false` | turns the rule off; needs a `reason`. Refused for a rule a catalog locked or gave a severity floor |
+| `severity` | `error`, `warning` or `info`; lowering it needs a `reason` and stays above a catalog's floor |
+| `raise` | lift the severity that many steps instead, capped at error |
 | `params` | the rule's parameters, as its page in the [rule reference](rules/_index.md) lists them |
 | `accept` | for outcome rules: further ways of meeting the requirement, each a `name` and an `expr` |
 
-Disabled rules and lowered severities are listed in every report. A rule that an organisation's catalog locked cannot be disabled, lowered or reshaped (`params`, `accept`); see [how rules combine](composition.md).
+Disabled rules and lowered severities are listed in every report with their reason. The policy keys (`locked`, `min_severity`, `exceptions`) and the applicability keys (`when`, `tiers`) belong to catalogs; the repository adjusts, it does not set policy. A rule a catalog locked cannot be disabled, lowered or reshaped (`params`, `accept`) here; see [how rules combine](composition.md).
 
-A key that names no existing rule defines one, in the format described in [writing rules](writing-rules.md):
+## rules
+
+The repository's own rules, a list in the catalog format described in [writing rules](writing-rules.md): full definitions with an `id`, or `use:` entries that select rules from the library. A terse definition is enough: the id serves as title, the message as requirement.
 
 ```yaml
 rules:
-  repo/arch-doc:
+  - use: slop/commented-out-code       # a library rule the extended presets did not select
+  - id: repo/arch-doc
     kind: expr
+    severity: warning
     expr: file("docs/ARCHITECTURE.md")
     message: "architecture doc missing"
     fix: { human: "write docs/ARCHITECTURE.md" }
 ```
+
+A rule a catalog already defines cannot be redefined here; adjust it under `overrides`. Rules defined in the repository may be `command` rules, which catalogs may not carry.
 
 ## exceptions
 
@@ -159,4 +174,4 @@ A baseline and an exception are different tools: an exception is a reasoned, vis
 
 ## sources
 
-`sources:` names a file that maps `org` and `team/<name>` to catalog references, so repositories do not carry URLs and pins. See [organisations](organisations.md).
+`sources:` names the organisation's sources file. It maps `org` and `team/<name>` to catalog references, so repositories carry no URLs and pins; it may also set the catalog pin and the baseline `extends` every repository gets, and the `signers` whose signatures make registry catalogs trustworthy. See [organisations](organisations.md).

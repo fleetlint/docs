@@ -9,7 +9,8 @@ No editor, OS or backup files are tracked
 | Stacks | any |
 | Scope | each |
 | Kind | expr |
-| Source | fleetlint-minimal@0.1.0 |
+| Source | library v0.0.0-20261006213659-52f509bfa17c |
+| Selected by | fleetlint-minimal@0.1.0 |
 
 ## Requirement
 

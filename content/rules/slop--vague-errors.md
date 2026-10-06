@@ -9,7 +9,8 @@ Error messages say what failed
 | Stacks | any |
 | Scope | root |
 | Kind | expr |
-| Source | fleetlint-slop@0.1.0 |
+| Source | library v0.0.0-20261006213659-52f509bfa17c |
+| Selected by | fleetlint-slop@0.1.0 |
 
 ## Requirement
 

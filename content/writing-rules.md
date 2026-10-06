@@ -12,7 +12,7 @@ description: "The rule format: predicates, outcome rules, fix actions, command r
 - **Presets** ship in the binary and are referenced as `fleetlint:<name>`. A preset defines no rules: it selects them from the library with `- use: <id>` or `- use: <family>/*` in its `rules:` list (`minimal`, `recommended`, `slop`), or adjusts an included preset with `overrides:` (`strict`, `oss`). Every binary embeds one version of the catalog (`fleetlint --version` and every report name it); a repository uses another version with `catalog: {version: …}` (see below).
 - **Your catalog** is a YAML file with the same format, hosted anywhere over https and referenced with its digest: `https://…/catalog.yaml#sha256-<hex>`. Get the digest with `fleetlint catalog digest catalog.yaml`. Fetches are https only, follow redirects only within the same host, time out after 20 seconds and refuse bodies over 2 MiB; the digest, not the transport, is what makes the content trusted. Every rule and partial must state its `severity`.
 - **A catalog in a git repository** is referenced as `git+<url>//<path>@<revision>`, for example `git+https://git.example.com/platform/standards.git//teams/mobile/catalog.yaml@v3.2.0#sha256-<hex>`. The URL is https or ssh and is fetched with the credentials git already has (credential helper, ssh agent), so private repositories work. The revision is a tag or a full commit SHA, never a branch. A commit SHA needs no digest; a tag can be moved, so it must carry `#sha256-<hex>` and a moved tag fails the digest check. Files over 2 MiB are refused and the fetch times out after two minutes. Like https catalogs, git catalogs are untrusted: they cannot declare `command` rules, and may include only presets, https catalogs and other git catalogs.
-- **Inline rules** go under `rules:` in `.fleetlint.yaml` with a `kind`.
+- **The repository's own rules** go under `rules:` in `.fleetlint.yaml`, as a list in the same format as a catalog's (`id`, `kind`, `severity`, …, or `- use: <id>` to select a library rule); adjustments to catalog rules go under `overrides:`. See [configuration](configuration.md#rules).
 
 ## Catalog format
 
@@ -22,6 +22,9 @@ kind: Catalog
 metadata:
   name: my-standards
   version: 1.2.0
+  engine: 2                           # the engine level the catalog is written for
+  layer: org                          # org or team; where it resolves in a run (omit for a repository's local catalog)
+  catalog: { version: v0.2.0 }        # the fleetlint catalog the includes and `use:` selections come from; required for a remote catalog
   includes: [fleetlint:recommended]   # optional; loaded first
 rules:
   - id: family/name            # namespaced, stable; documentation and overrides key on it

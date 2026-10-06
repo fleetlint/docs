@@ -9,7 +9,8 @@ Workflows declare minimal permissions
 | Stacks | any |
 | Scope | root |
 | Kind | expr |
-| Source | fleetlint-recommended@0.1.0 |
+| Source | library v0.0.0-20261006213659-52f509bfa17c |
+| Selected by | fleetlint-recommended@0.1.0 |
 
 ## Requirement
 

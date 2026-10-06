@@ -9,7 +9,8 @@ The repository's own check passes within budget
 | Stacks | any |
 | Scope | root |
 | Kind | go |
-| Source | fleetlint-recommended@0.1.0 |
+| Source | library v0.0.0-20261006213659-52f509bfa17c |
+| Selected by | fleetlint-recommended@0.1.0 |
 
 ## Requirement
 

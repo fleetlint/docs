@@ -6,7 +6,7 @@ facts:
   tier: 2
   visibility: public
   container: none
-rules:
+overrides:
   quality/coverage-threshold:
     enabled: false
     reason: "a documentation site: the link check covers every page and there is no code to measure"
