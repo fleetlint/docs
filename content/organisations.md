@@ -46,30 +46,7 @@ A catalog loaded over https or git can add and tighten rules, use the built-in f
 
 ## What applies when
 
-A repository's effective rule set is computed in one pass, and the result does not depend on anything but the files involved:
-
-1. **`extends` in written order.** With a `sources` file the order is fixed instead: presets, `org`, `team/*`, then catalogs the repository names directly.
-2. **For each catalog, its `includes` first** (depth-first, in the listed order), then the catalog itself.
-3. **Within a catalog, `rules:` in list order**: inline definitions and `use:` selections, the latter expanded from the catalog's own `rules/` directory first and the catalog source's library second. Then the catalog's `overrides:`, patterns before exact ids.
-4. **Last, the repository**: its `rules:` block, exceptions and baseline.
-
-A rule's identity is its id. What happens when an id appears twice:
-
-| Situation | Result |
-|---|---|
-| two inline definitions in one catalog | error |
-| inline definition and a `use:` selecting the same id, in one catalog | the inline definition; this is how one rule of a family glob is replaced |
-| `use:` selects a rule that is already loaded (from an include or an earlier `extends` entry) | the rule stays as first loaded, with that catalog's layer and source; nothing is redefined |
-| inline definition of an id that is already loaded | **replaces** it wholesale, keeping the earlier severity floor. Refused if the earlier definition is locked or the new severity is below its floor; a lower severity across layers is recorded as *weakened* and shows in every report |
-| two catalogs select the same library rule | loaded once, from the first |
-
-Three ways to change a rule you did not write:
-
-- **Extend without restating** it: `overrides:`. Severity or `raise`, `params`, `accept` (which *adds* satisfiers to an outcome rule, the usual way to recognise your own tool), `when` and `tiers`, `locked`, `min_severity`, `exceptions`. Overrides reach rules from includes, from earlier `extends` entries and from this catalog's own `use:` selections; they cannot target a rule the same catalog defines inline, and they cannot change an expression.
-- **Overwrite**: define the id inline in a later catalog. Everything about the rule comes from your definition; the earlier one contributes only its lock and floor. Use this when the check itself has to be different.
-- **Run two in parallel**: give yours an id in your own family (`acme/go-config`) and keep or disable the built-in one (`overrides: {lint/go-config: {enabled: false, reason: "replaced by acme/go-config"}}`, which the report lists). Ids never merge: two rules that check similar things are two findings, two explain pages, two exceptions.
-
-A catalog that ships its own `rules/<family>/<name>.yaml` files (a commit-pinned git reference or an OCI artifact) selects from them with the same `use:`; a file there with a built-in id replaces the built-in definition for that catalog.
+The complete account of how presets, catalogs, selections, overrides and the repository combine, and what happens when two of them touch the same rule, is its own page: [how rules combine](composition.md). The short version: `extends` in order, includes before the catalog, a catalog's `rules` list in order and then its `overrides`, the repository last; an id met again is either kept (selections), replaced (an inline definition, within the earlier policy) or adjusted (an override); policy only tightens.
 
 ## Overrides in a catalog
 
@@ -105,14 +82,14 @@ A catalog that serves as an organization baseline can constrain what lower layer
 rules:
   - id: security/no-tracked-secrets
     severity: error
-    locked: true          # cannot be disabled, lowered or redefined by anything loaded after it
+    locked: true          # cannot be disabled, lowered, rescoped, reshaped (params, accept) or redefined by anything loaded after it
     exceptions: false     # no per-finding exceptions either; reserved for the few absolute rules
   - id: ci/actions-pinned
     severity: error
     min_severity: warning # may be lowered to warning (with a reason), never to info; may be disabled with a reason
 ```
 
-Violations are configuration errors at load time (exit 2), not weaker checks at run time, and they name the catalog that set the constraint. Raising severity, adding `params` and `accept`, and reasoned exceptions on locked rules remain possible; the report shows every one.
+Violations are configuration errors at load time (exit 2), not weaker checks at run time, and they name the catalog that set the constraint. Raising the severity of a locked rule and reasoned exceptions on it remain possible, `params` and `accept` do not (both only widen what satisfies the rule; the locking catalog sets them); the report shows every one.
 
 Locks only hold for catalogs that are actually loaded. A repository could drop the baseline from `extends`, so enforcement belongs where the check runs: the organization's CI template and fleet runner pass `--require acme-baseline` (a catalog name, a ref, or `ref#sha256-<digest>` to pin the exact version). A repository whose effective configuration lacks that catalog fails with exit 2 before any rule runs, and in fleet mode becomes an error row. The flag is persistent, so `fix`, `explain` and `baseline` refuse under a weaker configuration too.
 

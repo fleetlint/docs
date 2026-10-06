@@ -71,6 +71,11 @@ disableKinds = ["taxonomy", "term", "RSS"]
   weight = 41
 
 [[menu.main]]
+  name = "How rules combine"
+  parent = "customization"
+  pageRef = "/composition"
+  weight = 41
+[[menu.main]]
   name = "Organisations"
   parent = "customization"
   pageRef = "/organisations"

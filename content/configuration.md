@@ -120,7 +120,7 @@ Per rule, any of:
 | `params` | the rule's parameters, as its page in the [rule reference](rules/_index.md) lists them |
 | `accept` | for outcome rules: further ways of meeting the requirement, each a `name` and an `expr` |
 
-Disabled rules and lowered severities are listed in every report. A rule that an organisation's catalog locked cannot be disabled or lowered; see [organisations](organisations.md).
+Disabled rules and lowered severities are listed in every report. A rule that an organisation's catalog locked cannot be disabled, lowered or reshaped (`params`, `accept`); see [how rules combine](composition.md).
 
 A key that names no existing rule defines one, in the format described in [writing rules](writing-rules.md):
 
