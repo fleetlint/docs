@@ -57,8 +57,11 @@ overrides:
   docs/adr-directory:     {enabled: false, reason: "decisions are kept in the wiki"}
   public/license:         {when: "true"}          # run whatever the detected visibility
   docs/architecture:      {tiers: [1, 2]}
+  "release/*":            {locked: true}           # a pattern: the whole family
+  "*":                    {raise: 1}               # every included rule one step stricter
 ```
 
+- A key is a rule id or a pattern over ids: `"*"` is every included rule, `"release/*"` a family. Patterns apply first, exact ids refine them. `raise: 1` lifts whatever matches one severity step (info → warning → error, capped at error); this is how `fleetlint:strict` is written: `"*": {raise: 1}` plus `exceptions: false` on the security rules.
 - `severity`, `params`, `accept` and `enabled` work as in a repository's `rules:` block, including the need for a `reason` when a rule is disabled or its severity lowered. Such changes appear in every report with the catalog's layer.
 - `when` and `tiers` replace the rule's applicability: `when: "true"` makes a conditional rule unconditional (this is how `fleetlint:oss` switches the `public/*` family on), `tiers` widens or narrows the tiers it applies to. A locked rule refuses both.
 - `locked`, `min_severity` and `exceptions` set the policy for everything loaded afterwards, and only ever tighten it: a rule an earlier catalog locked cannot be unlocked, disabled or lowered, a floor cannot be lowered, and exceptions that were forbidden cannot be allowed again.

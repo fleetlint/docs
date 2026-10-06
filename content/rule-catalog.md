@@ -45,6 +45,11 @@ Severity is the default; repositories may raise it freely and lower it with a re
 | `lint/python-config` | warning | `[tool.ruff]` plus mypy/pyright strict | done |
 | `lint/rust-config` | warning | `[lints]` table in Cargo.toml | done |
 | `lint/node-config` | warning | eslint flat config and `strict: true` tsconfig | done |
+| `lint/java-config` | warning (java) | Checkstyle configuration, Error Prone or SpotBugs in the Maven build | done |
+| `lint/dotnet-config` | warning (dotnet) | `Directory.Build.props` with Nullable, TreatWarningsAsErrors and AnalysisLevel, or analyzer severities in `.editorconfig` | done |
+| `lint/cpp-config` | warning (cpp) | `.clang-tidy` and `.clang-format` present | done |
+| `lint/ruby-config` | warning (ruby) | `.rubocop.yml` or `.standard.yml` present | done |
+| `lint/php-config` | warning (php) | PHPStan or Psalm plus PHP CS Fixer, Pint or PHP_CodeSniffer configured | done |
 | `lint/hugo-strict-build` | warning (hugo) | the task runner, a hook or CI runs `hugo --panicOnWarning` (outcome rule) | done |
 | `lint/kotlin-config` | warning | detekt or ktlint configured | done |
 | `lint/kotlin-detekt-strict` | warning | detekt sets `active: true` for SwallowedException, TooGenericExceptionCaught, EmptyCatchBlock, LongMethod, CognitiveComplexMethod; one finding per missing rule | done |

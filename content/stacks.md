@@ -1,7 +1,7 @@
 ---
 title: "Stack profiles"
 weight: 30
-description: "The concrete tools and settings for Go, Python, Rust, Node, Kotlin, Flutter and Hugo sites."
+description: "The concrete tools and settings for Go, Python, Rust, Node, Kotlin, Flutter, Java, .NET, C/C++, Ruby, PHP and Hugo sites."
 ---
 
 # Stack profiles
@@ -107,6 +107,80 @@ The concrete tools and settings behind [the baseline](baseline.md) for each stac
 - **Slop guards:** `flutter_style_todos`, `avoid_print`, `require_trailing_commas` via very_good_analysis; every `// ignore:` needs a reason on the line above; `jscpd` for duplication; the `mutation_test` package for mutation testing.
 - **Benchmarks:** `benchmark_harness` for pure Dart logic; `integration_test` with `traceAction` for frame timings of key screens; app-size budget from `flutter build --analyze-size`.
 - **UI:** widget tests with `meetsGuideline(textContrastGuideline)`, `labeledTapTargetGuideline`, `androidTapTargetGuideline` and `iOSTapTargetGuideline`; golden tests in light/dark and large text; `flutter gen-l10n` with `untranslated-messages-file` set, and `check` fails if that file is not empty.
+
+## Java
+
+Detected by `pom.xml`. Gradle builds, Kotlin or Java, are the [Kotlin](#kotlin-jvm--android) profile.
+
+- **Toolchain:** `.java-version` or `.sdkmanrc` (Temurin), the Maven wrapper (`./mvnw`) committed; `maven-enforcer-plugin` pins the Maven version.
+- **Format:** Spotless with google-java-format or Palantir; `spotless:check` in the hooks.
+- **Lint:** Checkstyle with a committed `config/checkstyle/checkstyle.xml` and `failOnViolation`; Error Prone as a compiler plugin; SpotBugs for bug patterns. Checked by `lint/java-config`; `fleetlint fix --apply` writes the Checkstyle configuration.
+- **Errors:** no `catch (Exception e)` without rethrow (Checkstyle `IllegalCatch`, `EmptyCatchBlock`); checked exceptions translated at module boundaries.
+- **Tests:** JUnit 5, AssertJ, Testcontainers for integration; Mockito only at boundaries. `surefire` for unit tests, `failsafe` for integration.
+- **Coverage:** JaCoCo with `<rule>` minimums in `jacoco-maven-plugin` (`check` goal) plus `diff-cover` on the XML report.
+- **Audit:** OWASP `dependency-check-maven` or `osv-scanner` on the dependency tree; `gitleaks`.
+- **Licenses:** `license-maven-plugin` (`third-party-report` with an allowlist) or `osv-scanner` license scanning.
+- **Slop guards:** Checkstyle `TodoComment` requiring an issue reference, `SuppressWarnings` forbidden without a reason filter; PMD CPD for duplication; Pitest for mutation testing.
+- **API compatibility (libraries):** `japicmp-maven-plugin` or Revapi against the previous release.
+
+## .NET
+
+Detected by `global.json`, `Directory.Build.props`, a `.sln`/`.slnx` or a `.csproj`/`.fsproj`.
+
+- **Toolchain:** `global.json` pins the SDK (`rollForward: latestPatch`); `Directory.Packages.props` for central package versions; `dotnet restore --locked-mode` with `packages.lock.json` committed.
+- **Format:** `dotnet format --verify-no-changes` in the hooks; style rules in `.editorconfig`.
+- **Lint:** `Directory.Build.props` at the root with `<Nullable>enable`, `<TreatWarningsAsErrors>true`, `<AnalysisLevel>latest-all` (or `latest-recommended`) and `<EnforceCodeStyleInBuild>true`, so every project compiles under the same analyzers. Checked by `lint/dotnet-config`; `fleetlint fix --apply` writes the file.
+- **Errors:** no `catch (Exception)` without rethrow (CA1031); `Result`-style types or exceptions, not both; `ConfigureAwait` policy decided once.
+- **Tests:** xUnit, FluentAssertions or Shouldly, Testcontainers; `dotnet test --collect:"XPlat Code Coverage"`.
+- **Coverage:** coverlet with `/p:Threshold` or `diff-cover` on the Cobertura report.
+- **Audit:** `dotnet list package --vulnerable --include-transitive` failing on findings; `gitleaks`.
+- **Licenses:** `dotnet-project-licenses` or `nuget-license` with an allowlist.
+- **Slop guards:** analyzers IDE0005 (unused usings), CA1848/CA2254 (logging), a `TODO` check via `.editorconfig` `dotnet_diagnostic.S1135`; `jscpd` for duplication; Stryker.NET for mutation testing.
+- **API compatibility (libraries):** `Microsoft.DotNet.ApiCompat` (`EnablePackageValidation` with a baseline version).
+
+## C/C++
+
+Detected by `CMakeLists.txt`, `meson.build`, a Conan file or `vcpkg.json`.
+
+- **Toolchain:** the compiler and standard pinned in presets (`CMakePresets.json`), dependencies through Conan or vcpkg with a lockfile (`conan.lock`, `vcpkg.json` builtin-baseline).
+- **Format:** `clang-format` with a committed `.clang-format`; the hook formats staged files.
+- **Lint:** `clang-tidy` with a committed `.clang-tidy` (`WarningsAsErrors: '*'`) over `compile_commands.json`; `-Wall -Wextra -Werror` (`CMAKE_COMPILE_WARNING_AS_ERROR`). Checked by `lint/cpp-config`; `fleetlint fix --apply` writes both files.
+- **Errors:** no swallowed exceptions (`bugprone-empty-catch`), `std::expected`/error codes at boundaries, RAII everywhere (`cppcoreguidelines-owning-memory`).
+- **Tests:** Catch2 or GoogleTest through CTest; sanitizers (ASan, UBSan) in a dedicated preset run by `check`.
+- **Coverage:** `gcovr` or `llvm-cov` with `--fail-under-line`.
+- **Audit:** `osv-scanner` on the lockfile; `cppcheck` as a second analyzer; `gitleaks`.
+- **Licenses:** Conan's `conan graph info --format=json` or vcpkg's license fields against an allowlist.
+- **Slop guards:** `readability-function-cognitive-complexity`, `readability-function-size`; `jscpd` or PMD CPD for duplication; Mull for mutation testing.
+- **API compatibility (libraries):** `abi-compliance-checker` or `abidiff` against the previous release.
+
+## Ruby
+
+Detected by `Gemfile` or a `.gemspec`.
+
+- **Toolchain:** `.ruby-version`; Bundler with `Gemfile.lock` committed; `bundle config set frozen true` in CI.
+- **Format and lint:** RuboCop with a committed `.rubocop.yml` (`NewCops: enable`, rubocop-performance, rubocop-rspec), or Standard; `.rubocop_todo.yml` as the ratchet. Checked by `lint/ruby-config`; `fleetlint fix --apply` writes `.rubocop.yml`.
+- **Errors:** `Lint/SuppressedException` on, `Style/RescueStandardError: explicit`; no `rescue Exception`.
+- **Tests:** RSpec or Minitest; `webmock`/`vcr` for HTTP; `simplecov` with `minimum_coverage`.
+- **Coverage:** SimpleCov `minimum_coverage` and `diff-cover` on the Cobertura formatter output.
+- **Audit:** `bundler-audit check --update`; `brakeman` for Rails; `gitleaks`.
+- **Licenses:** `license_finder` with an allowlist.
+- **Slop guards:** `Style/CommentAnnotation` with a required colon and an issue reference convention; `flay` or `jscpd` for duplication; `mutant` for mutation testing.
+- **API compatibility (libraries):** none standard; semantic versioning enforced by review and a changelog entry per public change.
+
+## PHP
+
+Detected by `composer.json`.
+
+- **Toolchain:** `.php-version` or `composer.json` `config.platform.php`; `composer.lock` committed; `composer install --prefer-dist` in CI.
+- **Format:** PHP CS Fixer (`.php-cs-fixer.dist.php`, `@PER-CS`, `declare_strict_types`) or Pint; the hook runs `--dry-run`.
+- **Lint:** PHPStan at `level: max` with `phpstan-strict-rules` (`phpstan.neon.dist`) or Psalm; a generated baseline is the ratchet. Checked by `lint/php-config`; `fleetlint fix --apply` writes both configurations.
+- **Errors:** `declare(strict_types=1)` everywhere; exceptions typed per module; no empty `catch`.
+- **Tests:** PHPUnit or Pest; `--fail-on-warning`, `--fail-on-risky`.
+- **Coverage:** PHPUnit coverage (pcov) with `diff-cover` on the Clover/Cobertura report.
+- **Audit:** `composer audit` failing on advisories; `gitleaks`.
+- **Licenses:** `composer licenses --format=json` against an allowlist.
+- **Slop guards:** PHPStan's `disallowedCalls` for `var_dump`/`dd`, `ergebnis/phpstan-rules` for TODO hygiene; `jscpd` or `phpcpd` for duplication; Infection for mutation testing.
+- **API compatibility (libraries):** `roave/backward-compatibility-check` against the previous tag.
 
 ## Hugo / static sites
 
