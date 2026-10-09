@@ -86,7 +86,7 @@ fleetlint detects these on every run; `fleetlint facts` prints them with where e
 
 | Fact | Values | Detected from |
 |---|---|---|
-| `tier` | `1` production or public, `2` a tool you rely on, `3` an experiment | public or has a release pipeline: 1; otherwise 3 |
+| `tier` | `1` production or public, `2` a tool you rely on, `3` an experiment | inferred: public or has a release pipeline: 1; CI or tags: 2; otherwise 3 (`default`). `fleetlint facts` and every report say which fact decided |
 | `visibility` | `public`, `private` | not detected by `check`; `init` asks the forge once and writes it |
 | `stacks` | `go`, `python`, `rust`, `node`, `kotlin`, `flutter`, `java`, `dotnet`, `cpp`, `ruby`, `php`, `hugo` | manifests at the root |
 | `forge` | `github`, `gitea`, `gitlab` | the `origin` remote |
