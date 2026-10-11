@@ -14,6 +14,7 @@ fleetlint fleet --repos fleet.yaml --out reports    # a fleet file
 fleetlint fleet --repos fleet.yaml --update --deep  # pull clones, run make check in each
 fleetlint fleet --from github:acme                  # every repository of an owner
 fleetlint fleet --discover ~/src                    # every repository below a directory
+fleetlint fleet --discover ~/src --fix              # what fix --apply would change in each
 ```
 
 ## Fleet file
@@ -21,6 +22,11 @@ fleetlint fleet --discover ~/src                    # every repository below a d
 ```yaml
 version: 1
 cache: ~/.cache/fleetlint/repos      # where url entries are cloned (shallow)
+defaults:                            # for every repository, discovered ones too
+  tier: 2
+groups:                              # for the repositories of a group
+  experiments: {tier: 3, visibility: private}
+  apps: {team: mobile}
 repos:
   - path: ../api                       # relative to this file
     team: platform
@@ -30,7 +36,9 @@ repos:
     group: apps                        # optional; reports summarize per group
 ```
 
-An entry may also carry `visibility: public` or `private`: what the forge says about the repository, used when the repository does not say itself (through `facts.visibility` or the `agent.public` git setting).
+An entry may also carry `tier:` (1, 2 or 3) and `visibility:` (`public` or `private`). `defaults:` and `groups:` set `team`, `tier` and `visibility` for many repositories at once, including the ones `--discover` and `--from` add: an entry's own value wins over its group's, and the group's over the defaults. What a repository pins in its own `.fleetlint.yaml` wins over all of them, so the fleet file fills gaps and does not overrule a repository. An entry whose `path` is a repository `--discover` also finds adjusts that repository (and takes its group) instead of adding it twice. A tier from the fleet file shows as `fleet file` wherever the tier source is named, and those repositories leave *Facts to pin*.
+
+When neither the fleet file nor the repository says whether it is public, fleet mode asks the forge of the repository's remote, the way `init` does: `GITHUB_TOKEN` (or `GH_TOKEN`) for GitHub, `GITEA_TOKEN` for Gitea. A forge that does not show a repository without a token leaves its visibility unknown, with one note per forge at the end of the run. With the GitHub CLI logged in, `GITHUB_TOKEN=$(gh auth token) fleetlint fleet ...` is enough.
 
 Each entry has exactly one of `path` or `url`. Clones are shallow and reused; `--update` pulls before checking. Each repository is checked with its own `.fleetlint.yaml` (or the defaults), so the fleet view reflects what each repo actually enforces.
 
@@ -53,6 +61,16 @@ fleetlint fleet --repos fleet.yaml --from github:acme   # in addition to a fleet
 
 `--from` asks the forge's REST API for the owner's repositories and adds each as a `url` entry with the visibility the forge reports. Archived repositories and forks are skipped. Without a token only public repositories are listed; `GITHUB_TOKEN` (or `GH_TOKEN`) and `GITEA_TOKEN` are read from the environment and sent to that forge only. `GITHUB_API_URL` selects a GitHub Enterprise Server instance. Clones of discovered repositories send the same token as an `Authorization` header scoped to the forge's host (the way `actions/checkout` does), so private repositories clone over https without further git setup; repositories from a fleet file use git's own credentials. Clones go to `--cache`, or to the user cache directory when none is given. fleetlint only reads: it never writes to the forge.
 
+## Fixing across the fleet
+
+```sh
+fleetlint fleet --discover ~/src --fix                                       # plan only
+fleetlint fleet --discover ~/src --fix --apply --rule hooks/config-present   # one rule, everywhere
+fleetlint fleet --discover ~/src --fix --apply                               # every mechanical fix
+```
+
+`--fix` plans what `fleetlint fix` would change in every local repository and lists it per repository; `--apply` writes it, and the report then shows the state after the fixes. `--rule` limits both to one rule (repeatable), which suits working down the top levers. Existing files are never overwritten, nothing is committed, and cloned `url` entries are left alone: review and commit in each repository, or let `fleetlint init --pr` open the pull requests.
+
 ## Output directory
 
 | File | Contents |
@@ -62,7 +80,7 @@ fleetlint fleet --repos fleet.yaml --from github:acme   # in addition to a fleet
 | `fleet.json` | machine-readable: every result, all facts, git state, team and group summaries. Each rule definition is stored once under `definitions`; a result names its rule by id in `rule`, and in `definition` when the repository adjusted it (`version: 2`). |
 | `fleet.csv` | one row per repository (team, group, visibility, tier and its source, compliance, counts, fixable findings, rule errors, branch, commit, uncommitted changes, last commit, stale), for a spreadsheet or existing reporting |
 | `actions/<repo>.md` | the ordered task list for that repository, ready to hand to a coding agent; it starts with `fleetlint fix --apply` when part of the work is mechanical |
-| `history/<timestamp>.json` | a copy of `fleet.json` per run; keep the directory in git or a bucket to see drift over time |
+| `history/<timestamp>.json` | a copy of `fleet.json` per run; the next run into the same directory compares with the latest one. Keep the directory in git or a bucket to see drift over time |
 
 Compliance is the share of applicable rules that pass or are excepted. A rule that could not be evaluated (a file fleetlint cannot parse, say) is left out of it and reported as a rule error instead. A repository that could not be checked (missing path, clone failure, invalid config) is listed with its error and never counted as compliant.
 
@@ -70,6 +88,7 @@ Compliance is the share of applicable rules that pass or are excepted. A rule th
 
 | Section | What it answers |
 |---|---|
+| Since the last run | compared with the latest earlier run in `history/`: rules failing at error severity before and after, and per repository the rules that newly fail and the ones that were fixed. Absent on the first run |
 | Top levers | which rules hold back most repositories: ranked by the repositories they fail at error severity, then by all failures, with how many `fix --apply` repairs and how much of the errors and of all failures fixing the first ones closes |
 | Repositories | most urgent first (could not be checked, then errors, rule errors, warnings, lowest compliance); tier (marked when inferred or default), visibility, compliance, fixable findings, rule errors, the branch and commit that were checked with the number of uncommitted changes (rules read the working tree), and the last commit, marked stale after a year |
 | Groups, Teams | totals per group and per team |
