@@ -1,7 +1,7 @@
 # The toolchain that builds and checks the site. One place for the versions:
 # `mise install` locally, jdx/mise-action in the workflows.
 [tools]
-hugo = "0.166.0"
+hugo = "0.167.0"
 node = "24.21.0"      # for the Pagefind search index (make search)
 python = "3.14"       # for scripts/check-links.py
 go = "1.27.2"         # to install fleetlint (make tools)
