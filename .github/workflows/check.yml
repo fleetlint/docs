@@ -28,8 +28,8 @@ jobs:
           persist-credentials: false
       - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         # installs the versions in mise.toml: hugo, node, python, go, gitleaks
-      - name: fleetlint (the check target runs it; pin the version you use)
+      - name: fleetlint at the version the pages come from (FLEETLINT_VERSION in the Makefile)
         run: |
-          go install github.com/fleetlint/fleetlint/cmd/fleetlint@55252cf5728b3295c7ec6178e81f1228d5c7ac58
+          make tools
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - run: make check
