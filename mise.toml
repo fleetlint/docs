@@ -3,6 +3,6 @@
 [tools]
 hugo = "0.167.0"
 node = "24.21.0"      # for the Pagefind search index (make search)
-python = "3.14"       # for scripts/check-links.py
+python = "3.15.0"     # for scripts/check-links.py
 go = "1.27.2"         # to install fleetlint (make tools)
 gitleaks = "8.30.1"
