@@ -130,7 +130,7 @@ extends: [team/platform]
 - Resolution order is by layer, always: presets, then `org`, then `team/*`, then the repository (its directly referenced catalogs and its own file). Within a layer, written order.
 - Every rule carries the layer that brought it in (`preset`, `org`, `team`, `repo`), the catalog that defined its text (`source`, the library for selected rules) and the catalog that selected it (`selected_by`): `explain` prints them, JSON has them on the rule, SARIF in the rule properties, and the JSON `catalogs` list has each catalog's layer and name.
 - Locks and severity floors hold across catalogs: a team catalog cannot redefine a locked organization rule or set a severity below the organization's `min_severity`, and the floor still binds the repository after a team redefines the rule. Every lowering, by whichever layer, is recorded: it appears under `weakened` in JSON and under "Lowered severities" in the fleet report with its layer.
-- `--require org` and `--require team/platform` match the names from the sources file.
+- `--require org` and `--require team/platform` match the names from the sources file, and count only catalogs fetched by digest, commit or signature: a local file of the same name does not satisfy them.
 
 ## Catalogs from a registry: `oci://`, signatures, private templates
 

@@ -24,7 +24,7 @@ The container image runs on a checkout mounted at `/repo`:
 docker run --rm -v "$PWD:/repo" ghcr.io/fleetlint/fleetlint check
 ```
 
-Every [release](https://github.com/fleetlint/fleetlint/releases) carries archives for Linux, macOS and Windows, `.deb`, `.rpm`, `.apk` and Arch packages, `checksums.txt`, a cosign signature bundle for it and one SBOM per archive and package; the release notes show the `cosign verify-blob` command. The install script checks the archive against `checksums.txt` and, when `cosign` is installed, verifies the signature first. The image is signed with cosign too.
+Every [release](https://github.com/fleetlint/fleetlint/releases) carries archives for Linux, macOS and Windows, `.deb`, `.rpm`, `.apk` and Arch packages, `checksums.txt`, a cosign signature bundle for it and one SBOM per archive and package; the release notes show the `cosign verify-blob` command. The install script checks the archive against `checksums.txt` and, when `cosign` is installed, verifies the signature first; `FLEETLINT_VERIFY=cosign` makes the signature required. The image is signed with cosign too.
 
 `fleetlint version` prints the version of the tool and of the catalog built into it; `fleetlint catalog version` shows the catalog version the current repository runs with.
 

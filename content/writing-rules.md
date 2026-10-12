@@ -27,7 +27,7 @@ metadata:
   catalog: { version: v0.2.0 }        # the fleetlint catalog the includes and `use:` selections come from; required for a remote catalog
   includes: [fleetlint:recommended]   # optional; loaded first
 rules:
-  - id: family/name            # namespaced, stable; documentation and overrides key on it
+  - id: family/name            # lowercase letters, digits, dashes; stable: documentation and overrides key on it
     title: One line
     kind: expr                 # expr | go | command
     severity: warning          # error | warning | info
@@ -60,7 +60,7 @@ rules:
 
 `{taskrunner}` is the runner file for the repository's task runner (`Makefile`, `justfile` or `Taskfile.yml`), written with the container switch when `repo.container` is not `none`. `{stack}/devcontainer.json` is generated for all stacks, and only when `repo.container` is `devcontainer`; `{stack}/check.yml` and the hooks call the repository's runner and follow the container setting. A `{stack}/pre-commit-config.yaml` or `{stack}/check.yml` template is assembled: the shared part (hygiene, secret scan, commit messages, shell, the pre-push check), then the hooks or toolchain of the root stack, of any second stack in the same directory, and of each nested project. Like every template it is only written when the file does not exist; an existing file is never merged into.
 
-Every rule needs `title`, `requirement` and `fix.human`; presets additionally require `rationale` and `fix.agent` (enforced by tests).
+Every rule needs `title`, `requirement` and `fix.human`; presets additionally require `rationale` and `fix.agent` (enforced by tests). `fleetlint schema catalog` prints the JSON Schema of this format.
 
 ## CEL predicates
 
@@ -70,7 +70,7 @@ Accessors:
 
 | Function | Returns |
 |---|---|
-| `exists(glob)` | any file matches (`**` supported) |
+| `exists(glob)` | any file matches (`**` supported); see below for which files count |
 | `file(path)` | exact path exists (`has` is reserved by CEL) |
 | `glob(pattern)` | matching paths, sorted |
 | `tracked()` | git-tracked paths in the scope |
@@ -81,6 +81,12 @@ Accessors:
 | `matchesAny(list, regex)` | any element matches |
 
 Use `has(doc.field)` to test for a key before reading it; reading a missing key is an evaluation error, which the engine reports as a rule error rather than a pass.
+
+A rule that cannot read its input errors, it never passes: `text()`, `lines()`, `scan()` and `yaml()`/`toml()`/`json()` fail for a file that exists but cannot be read (too large, not a regular file, a symlink out of the repository), and `commits()` fails when `git log` does.
+
+`exists()`, `glob()` and stack detection see the tracked files plus the untracked ones git does not ignore, so a gitignored local file cannot make a rule pass on one machine and fail in CI. Vendored and build directories stay out.
+
+Every expression is type-checked when the configuration loads, for every rule, whether it applies to the repository or not: a typo is a configuration error (exit 2) naming the rule and the field (`when`, `expr`, `foreach`, a satisfier or partial). An evaluation stops at a cost limit, so a comprehension over every file cannot run for hours.
 
 Examples:
 
@@ -141,7 +147,9 @@ rules:
     fix: { human: "make fixtures" }
 ```
 
-Command rules execute repository code, so they run only with `--deep`, like `quality/check-passes`; without it they report as not applicable with that reason. The other constraints, all enforced before anything runs: only the repository's own config may declare one (remote catalogs are rejected); `run` is a relative path to a git-tracked, executable, regular file that is not world-writable, with no arguments. The program receives `{rule, facts, scope, root, params}` as JSON on stdin, runs with a scrubbed environment (`PATH`, `HOME`, `LANG`, `LC_ALL`, `TMPDIR`, `TERM`, `FLEETLINT=1`) in the scope directory, and has 60 seconds. It prints findings as JSON lines `{"message": "...", "path": "...", "line": 1}` on stdout, at most 1 MiB; exit 0 or 1 means it ran, anything else is a rule error, never a pass.
+Command rules execute repository code, so they run only with `--deep`, like `quality/check-passes`; without it they report as not applicable with that reason. The other constraints, all enforced before anything runs: only the repository's own config may declare one (remote catalogs are rejected); `run` is a relative path to a git-tracked, executable, regular file that is not world-writable, with no arguments. The program receives `{rule, facts, scope, root, params}` as JSON on stdin, runs in the scope directory with an environment without credentials (below), and has 60 seconds. It prints findings as JSON lines `{"message": "...", "path": "...", "line": 1}` on stdout, at most 1 MiB; exit 0 means it ran, exit 1 means it ran and printed findings; exit 1 without a finding (most often a crash) or any other code is a rule error, never a pass. Command rules need a git repository whose tracked files can be listed.
+
+The environment of a command rule (and of `make check` under `--deep`) keeps `PATH`, `HOME`, `USER`, `LOGNAME`, `SHELL`, `LANG`, `LC_ALL`, `TMPDIR`, `TERM`, `CI`, `JAVA_HOME`, `VIRTUAL_ENV`, their Windows counterparts, and variables starting with `GO`, `CARGO_`, `RUSTUP_`, `XDG_`, `UV_`, `PYTHON`, `GRADLE_`, `NVM_` or `LC_`. A name containing `TOKEN`, `SECRET`, `PASSWORD`, `PASSWD`, `AUTH`, `CREDENTIAL`, `_KEY` or `PRIVATE` is dropped even under a kept prefix. Command rules add `FLEETLINT=1`; `--deep` adds `CI=true` and `NO_COLOR=1`. On timeout the whole process group is killed.
 ## Go rules
 
 Rules are data. The one exception in the presets is `quality/check-passes`, which runs the repository's check and so has to be code. A new rule of that kind implements `rules.Checker` in `internal/rules/builtin`, is registered in `builtin.go`, declared in the catalog with `kind: go`, and gets a passing and a failing fixture test. If a rule only needs to read something the accessors do not offer yet, add the accessor instead. Return one `Finding` per concrete problem with `Path` and `Line` where known; set `Outcome.Evidence` to explain a pass.

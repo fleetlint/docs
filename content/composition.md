@@ -20,7 +20,7 @@ A repository's effective rule set comes from several places: the presets, an org
 | **select** (`- use: …`) | An entry in a catalog's `rules` list that takes a rule, or a family of rules, from the library as it is. |
 | **define** (inline) | An entry in a catalog's `rules` list with an `id` and the rule's full text. |
 | **override** | An entry in a catalog's `overrides` map that adjusts a rule the catalog took in from elsewhere. |
-| **layer** | Who owns a catalog: `preset`, `org`, `team`, `repo`. A catalog declares `org` or `team` in `metadata.layer`; presets are `preset`; everything else, including the repository's file, is `repo`. |
+| **layer** | Who owns a catalog: `preset`, `org`, `team`, `repo`. A catalog fetched by digest, commit or signature declares `org` or `team` in `metadata.layer`; presets are `preset`; everything else is `repo`, including any catalog file in the repository, whatever its `metadata.layer` says. |
 | **policy** | The three constraints a catalog can put on a rule for everything after it: `locked`, `min_severity`, `exceptions: false`. |
 
 ## What makes a run reproducible

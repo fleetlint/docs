@@ -6,7 +6,7 @@ description: "The .fleetlint.yaml reference: catalogs, facts, scopes, rule overr
 
 # Configuration
 
-`.fleetlint.yaml` at the repository root (`fleetlint.yaml` is also accepted). Everything is optional, and the whole policy of a repository is in this one file. `fleetlint schema` prints its JSON Schema; [integrations](integrations.md#editors) shows how to get completion in an editor.
+`.fleetlint.yaml` at the repository root (`fleetlint.yaml` is also accepted). Everything is optional, and the whole policy of a repository is in this one file. `fleetlint schema` prints its JSON Schema (`fleetlint schema catalog` and `fleetlint schema sources` those of catalog and sources files); [integrations](integrations.md#editors) shows how to get completion in an editor.
 
 ```yaml
 version: 1
@@ -31,11 +31,13 @@ rules:                              # the repository's own rules, or library rul
 facts:
   tier: 1
   visibility: public
-  taskrunner: just
   container: podman
 scopes:
+  - path: .                         # the repository root
+    stacks: [go]
+    taskrunner: just
   - path: web
-    facts: { stacks: [node] }
+    stacks: [node]
 exceptions:
   - rule: ci/actions-pinned
     match: ".github/workflows/android.yml"
@@ -52,7 +54,7 @@ The catalogs to apply, in order; a later one overrides an earlier one rule by ru
 | Reference | Meaning |
 |---|---|
 | `fleetlint:minimal`, `fleetlint:recommended`, `fleetlint:strict`, `fleetlint:oss`, `fleetlint:slop` | a preset of the catalog built into the binary (or of the pinned version, see below) |
-| a path | a catalog file, or a directory of them, in the repository or next to it |
+| a path | a catalog file, or a directory of them, inside the repository; an absolute path, `..` or a symlink out of it is refused |
 | `https://…#sha256-<digest>` | a catalog over https; the digest is required |
 | `git+<url>//<path>@<tag or commit>` | a file in a git repository; a tag additionally needs `#sha256-<digest>`, a full commit SHA does not |
 | `oci://<registry>/<repository>:<tag>` or `@sha256:<digest>` | a catalog artifact in a container registry, signed with cosign; a tag needs `signers` in a sources file, see [organisations](organisations.md#catalogs-from-a-registry-oci-signatures-private-templates) |
@@ -88,16 +90,28 @@ fleetlint detects these on every run; `fleetlint facts` prints them with where e
 |---|---|---|
 | `tier` | `1` production or public, `2` a tool you rely on, `3` an experiment | inferred: public or has a release pipeline: 1; CI or tags: 2; otherwise 3 (`default`). `fleetlint facts` and every report say which fact decided |
 | `visibility` | `public`, `private` | not detected by `check`; `init` asks the forge once and writes it |
-| `stacks` | `go`, `python`, `rust`, `node`, `kotlin`, `flutter`, `java`, `dotnet`, `cpp`, `ruby`, `php`, `hugo` | manifests at the root |
 | `forge` | `github`, `gitea`, `gitlab` | the `origin` remote |
-| `taskrunner` | `make`, `just`, `task`, `npm-scripts`, `gradle` | the first of Makefile, justfile, Taskfile, Gradle, package.json scripts |
 | `container` | `none`, `devcontainer`, `docker`, `podman` | `devcontainer` when a devcontainer.json exists, else `none` |
 
-`taskrunner` and `container` are choices as much as facts. Set `taskrunner` when a repository has more than one runner, or to say which one `fix` should write. Set `container` to say where the task runner's targets run: on the machine, in the dev container, or in an image run with docker or podman. `fix` then writes the runner file, hooks and check workflow for that combination. [The baseline](baseline.md#task-runner-contract) describes both.
+`facts:` holds what applies to the whole repository. Stacks and the task runner are set per directory, under [`scopes`](#scopes).
+
+`container` is a choice as much as a fact. Set it to say where the task runner's targets run: on the machine, in the dev container, or in an image run with docker or podman. `fix` then writes the runner file, hooks and check workflow for that combination. [The baseline](baseline.md#task-runner-contract) describes both.
 
 ## scopes
 
-Parts of the repository that are checked as projects of their own, each with its own stacks. Workspace members (go.work, pnpm, package.json workspaces, Cargo, melos, Gradle) and top-level directories with their own manifest are found without configuration. `scopes:` replaces that list; `scopes: []` turns it off.
+Parts of the repository that are checked as projects of their own, each with its own stacks. Workspace members (go.work, pnpm, package.json workspaces, Cargo, melos, Gradle) and top-level directories with their own manifest are found without configuration. Listing other paths under `scopes:` replaces that list; `scopes: []` turns it off.
+
+Each entry may pin what detection finds in its directory; nothing inherits it, so a member states its own stack:
+
+| Key | Values | Detected from |
+|---|---|---|
+| `path` | a directory relative to the root; `.` is the root itself | |
+| `stacks` | `go`, `python`, `rust`, `node`, `kotlin`, `flutter`, `java`, `dotnet`, `cpp`, `ruby`, `php`, `hugo` | manifests in the directory |
+| `taskrunner` | `make`, `just`, `task`, `npm-scripts`, `gradle` | the first of Makefile, justfile, Taskfile, Gradle, package.json scripts |
+
+`path: .` pins the root and adds no scope: listed alone, members are still discovered. Set `taskrunner` when a directory has more than one runner, or to say which one `fix` should write.
+
+Before 0.3, `facts.stacks` and `facts.taskrunner` applied to every scope and a scope wrote `facts: {stacks: [...]}`. Both are still read in 0.3 with a deprecation warning: `facts.stacks` and `facts.taskrunner` pin the root only, and a scope's `facts.stacks` is read as its `stacks`.
 
 ### Nested configuration
 
@@ -146,7 +160,7 @@ rules:
     fix: { human: "write docs/ARCHITECTURE.md" }
 ```
 
-A rule a catalog already defines cannot be redefined here; adjust it under `overrides`. Rules defined in the repository may be `command` rules, which catalogs may not carry.
+An id is `family/name` in lowercase letters, digits and dashes. A rule a catalog already defines cannot be redefined here; adjust it under `overrides`. The repository's own rules may not set `locked`, `min_severity` or `exceptions`: no layer comes after the repository for them to bind. Rules defined in the repository may be `command` rules, which catalogs may not carry.
 
 ## exceptions
 

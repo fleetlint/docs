@@ -23,7 +23,7 @@ The hook builds fleetlint with the Go toolchain prek manages, runs `fleetlint ch
 ```yaml
 - uses: fleetlint/action@main   # no release yet: pin a commit SHA
   with:
-    version: v0.2.0
+    version: v0.3.0
     fail-on: warning
     sarif-file: fleetlint.sarif
 - uses: github/codeql-action/upload-sarif@v4   # GitHub only; shows findings in the Security tab
@@ -38,12 +38,10 @@ The hook builds fleetlint with the Go toolchain prek manages, runs `fleetlint ch
 
 ```yaml
 include:
-  - remote: https://raw.githubusercontent.com/fleetlint/fleetlint/main/ci/gitlab/fleetlint.yml
-variables:
-  FLEETLINT_VERSION: v0.2.0
+  - remote: https://raw.githubusercontent.com/fleetlint/fleetlint/v0.3.0/ci/gitlab/fleetlint.yml
 ```
 
-The job installs the release, reports the findings in the merge request's Code Quality widget and fails at `FLEETLINT_FAIL_ON` (default `error`). Pin the include to a tag once one carries the file.
+The job installs the release of the tag it is included from, with that tag's install script, and requires the cosign signature of its checksums. It reports the findings in the merge request's Code Quality widget and fails at `FLEETLINT_FAIL_ON` (default `error`).
 
 ## Make
 
@@ -53,6 +51,10 @@ check: lint test cover audit build
 ```
 
 The templates `fleetlint fix` writes already do all three: a local hook, this line in the Makefile's `check` target, and an install step in the check workflow. `quality/policy-enforced` reports a repository where nothing runs fleetlint.
+
+## Machine-readable output
+
+`fleetlint check --format json` writes the whole run: `results` (each rule with its `status`, findings and evidence), `summary`, `facts`, `scopes`, the `catalogs` loaded with their layers, and what was `disabled` or `weakened`. Field names are snake_case and the document carries `version: 2`; a change of shape gets a new version. `summary.errors` counts error-severity failures, `summary.rule_errors` the rules that could not run. A rule's satisfiers from `accept:` are in `results[].rule.accept`. `--format sarif` writes SARIF for code-scanning tools.
 
 ## Pull-request comments
 
@@ -69,4 +71,4 @@ The templates `fleetlint fix` writes already do all three: a local hook, this li
 version: 1
 ```
 
-The first line gives completion and validation in editors with the YAML language server. `fleetlint schema` prints the same schema.
+The first line gives completion and validation in editors with the YAML language server. `fleetlint schema` prints the same schema; `fleetlint schema catalog` and `fleetlint schema sources` print those of catalog files and sources files.

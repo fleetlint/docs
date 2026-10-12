@@ -7,11 +7,11 @@ SHELL := bash
 # Hugo, Node, Python, Go and gitleaks are pinned in mise.toml (`mise install`).
 # The site documents this release of fleetlint; `make gen` needs that version on the PATH.
 # renovate: datasource=github-releases depName=fleetlint/fleetlint
-FLEETLINT_VERSION ?= v0.2.0   # the release the generated pages come from
+FLEETLINT_VERSION ?= v0.3.0   # the release the generated pages come from
 # renovate: datasource=npm depName=pagefind
 PAGEFIND_VERSION  ?= 1.5.2
 SITE_URL          ?= https://fleetlint.org
-# The docs version is the release's minor: v0.2.0 -> v0.2; patch releases replace its snapshot.
+# The docs version is the release's minor: v0.3.0 -> v0.3; patch releases replace its snapshot.
 DOCS_VERSION      := $(shell echo '$(strip $(FLEETLINT_VERSION))' | cut -d. -f1,2)
 
 .PHONY: help tools gen fmt lint test cover audit build search serve check-fast check demo search-index snapshot docs-version
