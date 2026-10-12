@@ -82,8 +82,8 @@ jobs:
     # all five must exist as real repo secrets: Gitea does not deliver
     # literal values written here to the called workflow
     secrets:
-      SSH_SERVER: ${{ secrets.JOHNNY_ALL_INKL_SSH_HOST }}
-      SSH_USER: ${{ secrets.JOHNNY_ALL_INKL_SSH_USER }}
-      SSH_PRIVATE_KEY: ${{ secrets.JOHNNY_ALL_INKL_PRIVATE_KEY }}
-      SSH_HOST_KEY: ${{ secrets.JOHNNY_ALL_INKL_HOST_KEY }}
+      SSH_SERVER: ${{ secrets.SSH_SERVER }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      SSH_HOST_KEY: ${{ secrets.SSH_HOST_KEY }}
       DEPLOY_REMOTE_PATH: ${{ secrets.DEPLOY_REMOTE_PATH }}
