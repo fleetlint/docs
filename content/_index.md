@@ -10,7 +10,7 @@ Policy for a fleet of repositories. fleetlint checks how a repository is set up 
 It does not lint code. It checks that the things which lint, test, build and release the code are present, wired together and configured the way you decided they should be, in every repository, the same way.
 
 ```sh
-go install github.com/fleetlint/fleetlint/cmd/fleetlint@latest
+brew install fleetlint/tap/fleetlint     # or scoop, nix, mise, a container: see Getting started
 cd your-repo
 fleetlint                 # zero configuration: discovers the setup, applies the recommended preset
 fleetlint fix --apply     # writes what can be written; never overwrites a file

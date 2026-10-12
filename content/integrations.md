@@ -21,17 +21,29 @@ The hook builds fleetlint with the Go toolchain prek manages, runs `fleetlint ch
 ## GitHub Actions and Gitea Actions
 
 ```yaml
-- uses: fleetlint/fleetlint/action@v0.1.0
+- uses: fleetlint/action@v1
   with:
+    version: v0.2.0
     fail-on: warning
     sarif-file: fleetlint.sarif
-- uses: github/codeql-action/upload-sarif@v3   # GitHub only; shows findings in the Security tab
+- uses: github/codeql-action/upload-sarif@v4   # GitHub only; shows findings in the Security tab
   if: always()
   with:
     sarif_file: fleetlint.sarif
 ```
 
-The action is a composite that installs the binary with `go install`, so it needs `actions/setup-go` before it. Gitea reads `.github/workflows` and runs the same composite; skip the SARIF upload there. Pin both `uses:` lines to SHAs.
+[fleetlint/action](https://github.com/fleetlint/action) installs the release binary (checked against `checksums.txt`, and against its cosign signature when `cosign` is on PATH), annotates every finding on its file and line, writes the report into the job summary and fails the step at `fail-on`. No Go toolchain needed. Gitea and Forgejo run it as `uses: https://github.com/fleetlint/action@v1`; skip the SARIF upload there. Pin `uses:` lines to SHAs.
+
+## GitLab CI
+
+```yaml
+include:
+  - remote: https://raw.githubusercontent.com/fleetlint/fleetlint/main/ci/gitlab/fleetlint.yml
+variables:
+  FLEETLINT_VERSION: v0.2.0
+```
+
+The job installs the release, reports the findings in the merge request's Code Quality widget and fails at `FLEETLINT_FAIL_ON` (default `error`). Pin the include to a tag once one carries the file.
 
 ## Make
 

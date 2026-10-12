@@ -9,10 +9,22 @@ description: "Install fleetlint, check a repository, fix what can be fixed."
 ## Install
 
 ```sh
+brew install fleetlint/tap/fleetlint                    # macOS, Linux
+scoop bucket add fleetlint https://github.com/fleetlint/scoop-bucket
+scoop install fleetlint/fleetlint                       # Windows
+nix profile install github:fleetlint/nur#fleetlint     # Nix
+mise use github:fleetlint/fleetlint                     # mise
+curl -fsSL https://raw.githubusercontent.com/fleetlint/fleetlint/main/scripts/install.sh | sh   # to ~/.local/bin
 go install github.com/fleetlint/fleetlint/cmd/fleetlint@latest
 ```
 
-Or download a binary for Linux, macOS or Windows from the [releases](https://github.com/fleetlint/fleetlint/releases). Each release carries `checksums.txt`, a signature bundle for it and one SBOM per archive; the release notes show the `cosign verify-blob` command.
+The container image runs on a checkout mounted at `/repo`:
+
+```sh
+docker run --rm -v "$PWD:/repo" ghcr.io/fleetlint/fleetlint check
+```
+
+Every [release](https://github.com/fleetlint/fleetlint/releases) carries archives for Linux, macOS and Windows, `.deb`, `.rpm`, `.apk` and Arch packages, `checksums.txt`, a cosign signature bundle for it and one SBOM per archive and package; the release notes show the `cosign verify-blob` command. The install script checks the archive against `checksums.txt` and, when `cosign` is installed, verifies the signature first. The image is signed with cosign too.
 
 `fleetlint --version` prints the version of the tool and of the catalog built into it.
 
