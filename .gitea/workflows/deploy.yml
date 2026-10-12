@@ -1,0 +1,89 @@
+# Builds the complete site (Hugo, the fleet report as the demo, the Pagefind search
+# index, the frozen docs of earlier releases) and deploys it to fleetlint.org through
+# the shared deploy workflow, which only receives the built site as an artifact.
+# A manual run with `release` freezes the docs of the current release first.
+# Gitea reads .gitea/workflows/ instead of .github/workflows/ when it exists.
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "17 4 * * *"   # nightly: refreshes the demo report
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Freeze the docs of FLEETLINT_VERSION under /vX.Y/ (replaces an earlier snapshot of that minor)"
+        type: boolean
+        default: false
+
+# Cancel superseded PR builds; don't cancel main (avoid half-deploys)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        # installs the versions in mise.toml: hugo, node, python, go, gitleaks
+      - name: Build the site
+        run: make build
+      - name: Fleet report over the fleetlint repositories (the demo)
+        run: |
+          set -euo pipefail
+          make tools
+          PATH="$(go env GOPATH)/bin:$PATH" make demo
+      - name: Search index
+        # before the snapshots are added: each brings its own index
+        run: make search-index
+      - name: Freeze this release's docs
+        if: github.event_name == 'workflow_dispatch' && (inputs.release == true || inputs.release == 'true') && github.ref == 'refs/heads/main'
+        env:
+          GITEA_URL: ${{ github.server_url }}
+          GITEA_OWNER: ${{ github.repository_owner }}
+          GITEA_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
+        run: |
+          make snapshot
+          scripts/snapshots.sh upload "$(make -s docs-version)" snapshot
+      - name: Add the docs of earlier releases under /vX.Y/
+        if: github.event_name != 'pull_request'
+        env:
+          GITEA_URL: ${{ github.server_url }}
+          GITEA_OWNER: ${{ github.repository_owner }}
+          GITEA_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
+        # every deploy carries all versions: the deploy rsyncs with --delete
+        run: scripts/snapshots.sh fetch public "$(make -s docs-version)"
+      - name: Upload built site
+        # NOT actions/upload-artifact: the official action detects Gitea as GHES and aborts
+        uses: https://github.com/christopherhx/gitea-upload-artifact@v4
+        with:
+          name: site
+          path: public/
+          retention-days: 1
+          if-no-files-found: error
+
+  deploy:
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    uses: self:johnny/build/.gitea/workflows/deploy-static-page.yaml@v11
+    with:
+      artifact-name: site
+    # all five must exist as real repo secrets: Gitea does not deliver
+    # literal values written here to the called workflow
+    secrets:
+      SSH_SERVER: ${{ secrets.JOHNNY_ALL_INKL_SSH_HOST }}
+      SSH_USER: ${{ secrets.JOHNNY_ALL_INKL_SSH_USER }}
+      SSH_PRIVATE_KEY: ${{ secrets.JOHNNY_ALL_INKL_PRIVATE_KEY }}
+      SSH_HOST_KEY: ${{ secrets.JOHNNY_ALL_INKL_HOST_KEY }}
+      DEPLOY_REMOTE_PATH: ${{ secrets.DEPLOY_REMOTE_PATH }}

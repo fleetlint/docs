@@ -7,26 +7,54 @@
 {{- if not $title }}{{ with findRESubmatch `(?m)^# (.+)$` .RawContent 1 }}{{ $title = index (index . 0) 1 }}{{ end }}{{ end -}}
 <title>{{ if and $title (ne $title site.Title) }}{{ $title }} · {{ end }}{{ site.Title }}</title>
 <meta name="description" content="{{ .Description | default site.Params.description }}">
-<link rel="canonical" href="{{ .Permalink }}">
+{{- $latest := .Permalink -}}
+{{- with site.Params.version }}{{ $latest = printf "%s%s" site.Params.latest (strings.TrimPrefix (printf "/%s/" .) $.RelPermalink) }}{{ end }}
+<link rel="canonical" href="{{ $latest }}">
+<link rel="icon" href="{{ "favicon.ico" | relURL }}" sizes="any">
+<link rel="icon" href="{{ "favicon.svg" | relURL }}" type="image/svg+xml">
+<link rel="apple-touch-icon" href="{{ "apple-touch-icon.png" | relURL }}">
+<meta property="og:title" content="{{ if and $title (ne $title site.Title) }}{{ $title }} · {{ end }}{{ site.Title }}">
+<meta property="og:description" content="{{ .Description | default site.Params.description }}">
+<meta property="og:image" content="{{ "brand/social-preview.png" | absURL }}">
 {{ $css := resources.Get "style.css" | fingerprint }}<link rel="stylesheet" href="{{ $css.RelPermalink }}">
 {{ block "head" . }}{{ end }}
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
 <header class="top">
-  <a class="brand" href="{{ site.Home.RelPermalink }}">fleetlint</a>
+  <a class="brand" href="{{ site.Home.RelPermalink }}"><img src="{{ "favicon.svg" | relURL }}" width="22" height="22" alt="">fleetlint</a>
   <span class="tagline">Policy for a fleet of repositories</span>
+  <select class="version" id="version" aria-label="Documentation version" hidden></select>
   <a class="repo" href="https://github.com/fleetlint/fleetlint">GitHub</a>
 </header>
 <div class="layout">
   {{ partial "nav.html" . }}
   <main id="content" data-pagefind-body>
+    {{ with site.Params.version }}<p class="banner" data-pagefind-ignore>These pages document fleetlint {{ . }}. <a href="{{ $latest }}">The latest release</a> is documented at the root of the site.</p>{{ end }}
     {{ block "main" . }}{{ end }}
   </main>
 </div>
 <footer class="bottom">
-  <span>MIT licensed. Documents the latest release.</span>
+  <span>MIT licensed. Documents {{ with site.Params.version }}fleetlint {{ . }}{{ else }}the latest release{{ end }}.</span>
   {{ with .File }}<a href="{{ site.Params.source }}/blob/main/content/{{ .Path }}">Source of this page</a>{{ end }}
 </footer>
+<script>
+  // versions.json is written at the site root by the deploy workflow; without it the switcher stays hidden.
+  (function () {
+    var current = {{ site.Params.version | default "" }}, prefix = current ? "/" + current + "/" : "/";
+    var select = document.getElementById("version");
+    fetch("/versions.json").then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
+      if (!v || !v.versions || !v.versions.length) return;
+      [["", "latest (" + v.latest + ")"]].concat(v.versions.map(function (x) { return [x, x]; })).forEach(function (o) {
+        select.add(new Option(o[1], o[0], false, o[0] === current));
+      });
+      select.hidden = false;
+      select.addEventListener("change", function () {
+        var path = location.pathname.indexOf(prefix) === 0 ? location.pathname.slice(prefix.length) : "";
+        location.href = (select.value ? "/" + select.value + "/" : "/") + path + location.hash;
+      });
+    }).catch(function () {});
+  })();
+</script>
 </body>
 </html>

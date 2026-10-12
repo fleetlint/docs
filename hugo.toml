@@ -6,6 +6,8 @@ disableKinds = ["taxonomy", "term", "RSS"]
 [params]
   description = "Policy for a fleet of repositories: checks how a repository is set up and how to close each gap."
   source = "https://github.com/fleetlint/docs"
+  latest = "https://fleetlint.org/"   # where the docs of the latest release live
+  # version = "v0.2"   # set by `make snapshot` (HUGO_PARAMS_VERSION) for a frozen release; empty for the latest
 
 [markup.highlight]
   codeFences = false   # plain code blocks: no highlighter theme to keep in step with the color scheme

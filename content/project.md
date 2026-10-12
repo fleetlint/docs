@@ -18,4 +18,4 @@ description: "Changelog, roadmap, source and license."
 
 0.x: the configuration, catalog and JSON output formats may still change before 1.0. Every change is listed in the changelog with a compatibility note.
 
-These pages document the latest release. The [rule reference](rules/_index.md) and the [CEL reference](cel-reference.md) are generated from the catalog; each page names the catalog version at its foot.
+These pages document the latest release; the docs of earlier releases stay under `/vX.Y/`, starting with v0.3, and the version switcher at the top of each page moves between them. The [rule reference](rules/_index.md) and the [CEL reference](cel-reference.md) are generated from the catalog; each page names the catalog version at its foot.
