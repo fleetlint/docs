@@ -64,7 +64,7 @@ Catalogs referenced by https or git are fetched on every run. Presets need no ne
 
 ## catalog
 
-Every binary carries one version of the catalog; `fleetlint --version` names it. A run uses exactly one version — for the presets, the rule library, and the fix templates — and every catalog in the run must build on that version:
+Every binary carries one version of the catalog; `fleetlint version` names it, and `fleetlint catalog version` shows the version a repository runs with and each catalog it loads. A run uses exactly one version — for the presets, the rule library, and the fix templates — and every catalog in the run must build on that version:
 
 ```yaml
 version: 1
