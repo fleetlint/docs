@@ -45,12 +45,12 @@ The effective rule set is computed once, at load time:
 5. **The repository last**, as a catalog of layer `repo` with the same grammar: `rules` (definitions and selections), `overrides`, `exceptions`. Then scopes and nested files, which may only override and except.
 
 ```text
-sources.yaml:   catalog: {version: v0.2.0}   extends: [fleetlint:recommended, org]
+sources.yaml:   catalog: {version: v0.1.0}   extends: [fleetlint:recommended, org]
 .fleetlint.yaml: extends: [team/platform]
 
 fleetlint:recommended   layer preset   includes minimal (8) + use: repo/*, ci/*, lint/*, … (71)
-org                     layer org      catalog v0.2.0 ✓   use: slop/*  +  acme/owner-file  +  overrides "release/*": {locked: true}
-team/platform           layer team     catalog v0.2.0 ✓   lint/shell redefined inline (weakened: recorded)
+org                     layer org      catalog v0.1.0 ✓   use: slop/*  +  acme/owner-file  +  overrides "release/*": {locked: true}
+team/platform           layer team     catalog v0.1.0 ✓   lint/shell redefined inline (weakened: recorded)
 .fleetlint.yaml         layer repo     overrides quality/coverage-threshold: {params: {min: 90}}   exceptions: …
 ```
 
@@ -103,7 +103,7 @@ Ids never merge. Two rules that check similar things are two findings, two expla
 
 A capability and its implementations are selected, adjusted and bound together. `use: lint/configured` selects the capability with every implementation; an override, an exception or a policy written for the capability id reaches all of them, and one written for `lint/configured/go` reaches that stack only. Disabling a capability is recorded once, not once per stack. Through the capability, `when` replaces the shared gate and leaves each implementation's own condition alone, and `accept:` reaches the outcome implementations.
 
-An organisation catalog that ships `rules/` can add an implementation without copying the capability: `rules/lint/configured/terraform.yaml` in that catalog inherits title, severity, requirement and fix from the fleetlint capability. Stack definitions come from the catalog version the run uses (`stacks/` in fleetlint/catalog, or in the fork named by `catalog: {repo: ...}`).
+An organisation catalog that ships `rules/` can add or replace an implementation without copying the capability: `rules/deps/unused-check/ruby.yaml` in that catalog inherits title, severity, requirement and fix from the fleetlint capability. Its implementations and its `stacks:` lists use the stacks of the catalog version the run uses; a catalog cannot define a stack of its own (see [stacks and per-stack rules](organisations.md#stacks-and-per-stack-rules)).
 
 ## Policy: what a lock, a floor and `exceptions: false` hold
 

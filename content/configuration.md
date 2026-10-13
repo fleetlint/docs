@@ -10,7 +10,7 @@ description: "The .fleetlint.yaml reference: catalogs, facts, scopes, rule overr
 
 ```yaml
 version: 1
-catalog: { version: v0.2.0 }        # the catalog version this repository runs with; one per run
+catalog: { version: v0.1.0 }        # the catalog version this repository runs with; one per run
 sources: git+https://git.example.com/org/standards.git//sources.yaml@<commit>   # the organisation's names, baseline and pin
 extends:
   - fleetlint:slop                  # in addition to what the sources file extends
@@ -71,7 +71,7 @@ Every binary carries one version of the catalog; `fleetlint version` names it, a
 ```yaml
 version: 1
 catalog:
-  version: v0.2.0          # a tag or a full commit SHA of the catalog repository
+  version: v0.1.0          # a tag or a full commit SHA of the catalog repository
   # repo: git@github.com:acme/fleetlint-catalog.git   # a fork; default is the fleetlint project's
 extends: [fleetlint:recommended]
 ```

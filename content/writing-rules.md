@@ -24,7 +24,7 @@ metadata:
   version: 1.2.0
   engine: 3                           # the engine level the catalog is written for
   layer: org                          # org or team; where it resolves in a run (omit for a repository's local catalog)
-  catalog: { version: v0.2.0 }        # the fleetlint catalog the includes and `use:` selections come from; required for a remote catalog
+  catalog: { version: v0.1.0 }        # the fleetlint catalog the includes and `use:` selections come from; required for a remote catalog
   includes: [fleetlint:recommended]   # optional; loaded first
 rules:
   - id: family/name            # lowercase letters, digits, dashes; stable: documentation and overrides key on it
@@ -188,7 +188,7 @@ run_image: "mcr.microsoft.com/devcontainers/java:21"     # where targets run wit
 lockfile_maintenance: true                               # Renovate refreshes the lockfile
 ```
 
-A marker is a `file` at the directory's root or a `glob` matching a project file at most two directories down (outside examples, fixtures, dependencies and build output). `contains` and `lacks` are regular expressions the file's text must or must not match, `with` lists paths that must exist as well, and `unless_stack` drops the marker when that stack was detected by its own markers. A new stack is a catalog change: its definition, then implementations of the capabilities it should meet. `stacks:` in `.fleetlint.yaml` and on rules must name a defined stack. Catalogs older than engine level 3 ship no `stacks/`; fleetlint detects their stacks as it always did.
+A marker is a `file` at the directory's root or a `glob` matching a project file at most two directories down (outside examples, fixtures, dependencies and build output). `contains` and `lacks` are regular expressions the file's text must or must not match, `with` lists paths that must exist as well, and `unless_stack` drops the marker when that stack was detected by its own markers. A new stack is a change to fleetlint/catalog (or a fork of it): its definition, then implementations of the capabilities it should meet. Other catalogs use the stacks of the catalog version they build on and cannot add their own. `stacks:` in `.fleetlint.yaml` and on rules must name a defined stack. Catalogs older than engine level 3 ship no `stacks/`; fleetlint detects their stacks as it always did.
 
 ## Command rules
 

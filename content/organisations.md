@@ -20,7 +20,7 @@ metadata:
   version: 1.0.0
   engine: 3
   layer: org                        # org or team; decides where it resolves in the run
-  catalog: { version: v0.2.0 }      # the fleetlint catalog this builds on; every repository runs that version
+  catalog: { version: v0.1.0 }      # the fleetlint catalog this builds on; every repository runs that version
   includes: ["fleetlint:minimal"]
 rules:
   - use: release/*                  # built-in rules, picked one family at a time
@@ -51,6 +51,25 @@ extends:
 ```
 
 A catalog loaded over https or git can add and tighten rules, use the built-in fix templates and every function in [the CEL reference](cel-reference.md). It cannot declare rules that execute commands; only a repository's own configuration and catalogs on a local path can. How rules are written is in [writing rules](writing-rules.md).
+
+## Stacks and per-stack rules
+
+Your catalog uses the stacks of the fleetlint catalog it builds on (`stacks/` at the version in `metadata.catalog`): detection, `repo.stacks` and the dev environment `fleetlint fix` writes come from there, so it never redefines Go or Node. On top of them it can:
+
+- scope its own rules to a stack with `stacks: [go]`; a stack id the base does not define fails the load;
+- select a capability with all its implementations (`use: lint/configured`) or adjust one stack (`overrides: {lint/configured/go: ...}`);
+- add or replace an implementation of a base capability. A catalog shipped with a `rules/` directory (a git tree or an `oci://` artifact) puts it at `rules/<family>/<name>/<stack>.yaml`; the file states only its check and inherits title, severity, requirement and fix from the base capability:
+
+```yaml
+# rules/deps/unused-check/ruby.yaml in your catalog
+id: deps/unused-check/ruby
+kind: outcome
+satisfiers:
+  - name: our-tool
+    expr: workflows().exists(w, steps(w).exists(s, s.run.contains("bin/unused-gems")))
+```
+
+What it cannot do is define a stack. A stack fleetlint does not ship (Terraform, an in-house language) needs its definition in `stacks/` of the catalog version the run uses: a fork of fleetlint/catalog, pinned with `catalog: {repo: ..., version: ...}`. [Capabilities](writing-rules.md#capabilities-one-requirement-one-implementation-per-stack) and [stacks](writing-rules.md#stacks) explain the formats.
 
 ## What applies when
 
@@ -108,7 +127,7 @@ Repositories should not carry URLs and pins for every catalog. An organization p
 ```yaml
 # sources.yaml
 version: 1
-catalog: { version: v0.2.0 }         # the fleetlint catalog version every repository runs with
+catalog: { version: v0.1.0 }         # the fleetlint catalog version every repository runs with
 extends: [fleetlint:recommended, org] # the baseline every repository gets, before its own extends
 catalogs:
   org: git+https://git.example.com/platform/standards.git//org/catalog.yaml@v3.2.0#sha256-<hex>
