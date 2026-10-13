@@ -1,3 +1,5 @@
+<img src="https://raw.githubusercontent.com/fleetlint/fleetlint/main/assets/fleetlint.svg" alt="fleetlint logo" width="96" align="right">
+
 # fleetlint documentation
 
 The source of [fleetlint.org](https://fleetlint.org): what [fleetlint](https://github.com/fleetlint/fleetlint) checks and why, how to configure it, how to roll it out across an organisation, and the reference for every rule.
