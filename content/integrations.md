@@ -23,7 +23,7 @@ The hook builds fleetlint with the Go toolchain prek manages, runs `fleetlint ch
 ```yaml
 - uses: fleetlint/action@main   # no release yet: pin a commit SHA
   with:
-    version: v0.3.0
+    version: v0.4.0
     fail-on: warning
     sarif-file: fleetlint.sarif
 - uses: github/codeql-action/upload-sarif@v4   # GitHub only; shows findings in the Security tab
@@ -38,7 +38,7 @@ The hook builds fleetlint with the Go toolchain prek manages, runs `fleetlint ch
 
 ```yaml
 include:
-  - remote: https://raw.githubusercontent.com/fleetlint/fleetlint/v0.3.0/ci/gitlab/fleetlint.yml
+  - remote: https://raw.githubusercontent.com/fleetlint/fleetlint/v0.4.0/ci/gitlab/fleetlint.yml
 ```
 
 The job installs the release of the tag it is included from, with that tag's install script, and requires the cosign signature of its checksums. It reports the findings in the merge request's Code Quality widget and fails at `FLEETLINT_FAIL_ON` (default `error`).
