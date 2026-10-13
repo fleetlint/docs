@@ -28,7 +28,13 @@ case "${1:-}" in
     ;;
   fetch)
     dir=$2 latest=$3
-    versions=$(curl -fsS "${auth[@]}" "$GITEA_URL/api/v1/packages/$GITEA_OWNER?type=generic&q=$PACKAGE&limit=50" |
+    list="$GITEA_URL/api/v1/packages/$GITEA_OWNER?type=generic&q=$PACKAGE&limit=50"
+    code=$(curl -sS -o /dev/null -w '%{http_code}' "${auth[@]}" "$list")
+    [ "$code" = 200 ] || {
+      echo "::error::listing the packages of $GITEA_OWNER returned HTTP $code: PACKAGES_TOKEN is missing or cannot read them"
+      exit 1
+    }
+    versions=$(curl -fsS "${auth[@]}" "$list" |
       python3 -c 'import json, sys; print("\n".join(p["version"] for p in json.load(sys.stdin) if p["name"] == sys.argv[1]))' "$PACKAGE" |
       grep -vxF "$latest" | sort -rV || true)
     for v in $versions; do

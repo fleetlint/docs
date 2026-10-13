@@ -48,10 +48,10 @@ jobs:
         # before the snapshots are added: each brings its own index
         run: make search-index
       - name: Freeze this release's docs
-        if: github.event_name == 'workflow_dispatch' && (inputs.release == true || inputs.release == 'true') && github.ref == 'refs/heads/main'
+        if: github.event_name == 'workflow_dispatch' && (github.event.inputs.release == 'true' || inputs.release == true) && github.ref == 'refs/heads/main'
         env:
           GITEA_URL: ${{ github.server_url }}
-          GITEA_OWNER: ${{ github.repository_owner }}
+          GITEA_OWNER: johnny   # owns the fleetlint-docs package and PACKAGES_TOKEN, wherever the repository lives
           GITEA_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
         run: |
           make snapshot
@@ -60,7 +60,7 @@ jobs:
         if: github.event_name != 'pull_request'
         env:
           GITEA_URL: ${{ github.server_url }}
-          GITEA_OWNER: ${{ github.repository_owner }}
+          GITEA_OWNER: johnny   # owns the fleetlint-docs package and PACKAGES_TOKEN, wherever the repository lives
           GITEA_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
         # every deploy carries all versions: the deploy rsyncs with --delete
         run: scripts/snapshots.sh fetch public "$(make -s docs-version)"
