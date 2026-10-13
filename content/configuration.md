@@ -60,7 +60,7 @@ The catalogs to apply, in order; a later one overrides an earlier one rule by ru
 | `oci://<registry>/<repository>:<tag>` or `@sha256:<digest>` | a catalog artifact in a container registry, signed with cosign; a tag needs `signers` in a sources file, see [organisations](organisations.md#catalogs-from-a-registry-oci-signatures-private-templates) |
 | `org`, `team/<name>` | a name from a `sources` file, see [organisations](organisations.md) |
 
-The presets build on each other: `minimal` holds the rules no repository should fail; `recommended` (the default) adds the task-runner contract, hooks, lint configuration, CI and release checks; `strict` is `recommended` with every warning an error, every informational rule a warning, and no exceptions on the security rules; `oss` is `recommended` with the `public/*` family switched on whatever the detected visibility, for repositories that are about to be published or live on a forge without a visibility API; `slop` is an add-on with the heuristic `slop/*` rules (see [slop](slop.md)).
+The presets build on each other: `minimal` holds the rules no repository should fail (nothing secret, accidental or oversized tracked, no conflict markers, hooks with a secret scan, a license in public repositories); `recommended` (the default) adds the task-runner contract, hooks, formatter, linter and type-checker configuration, dependencies, CI and release checks; `strict` is `recommended` with every warning an error, every informational rule a warning, and no exceptions on the security rules; `oss` is `recommended` with its `public/*` rules switched on whatever the detected visibility, for repositories that are about to be published or live on a forge without a visibility API; `slop` is an add-on with the heuristic `slop/*` rules and, for public repositories, `public/no-agent-files` and `public/no-ai-attribution` (see [slop](slop.md)). The [rule catalog](rule-catalog.md) lists which preset selects each rule.
 
 Catalogs referenced by https or git are fetched on every run. Presets need no network.
 
@@ -106,10 +106,10 @@ Each entry may pin what detection finds in its directory; nothing inherits it, s
 | Key | Values | Detected from |
 |---|---|---|
 | `path` | a directory relative to the root; `.` is the root itself | |
-| `stacks` | `go`, `python`, `rust`, `node`, `kotlin`, `flutter`, `java`, `dotnet`, `cpp`, `ruby`, `php`, `hugo` | manifests in the directory |
+| `stacks` | a stack the catalog defines in `stacks/`: `go`, `python`, `rust`, `node`, `kotlin`, `flutter`, `java`, `dotnet`, `cpp`, `ruby`, `php`, `hugo` in the fleetlint catalog | the stack definitions' markers in the directory, see [stacks](writing-rules.md#stacks) |
 | `taskrunner` | `make`, `just`, `task`, `npm-scripts`, `gradle` | the first of Makefile, justfile, Taskfile, Gradle, package.json scripts |
 
-`path: .` pins the root and adds no scope: listed alone, members are still discovered. Set `taskrunner` when a directory has more than one runner, or to say which one `fix` should write.
+`path: .` pins the root and adds no scope: listed alone, members are still discovered. Set `taskrunner` when a directory has more than one runner, or to say which one `fix` should write. A stack name the catalog does not define is a configuration error.
 
 Before 0.3, `facts.stacks` and `facts.taskrunner` applied to every scope and a scope wrote `facts: {stacks: [...]}`. Both are still read in 0.3 with a deprecation warning: `facts.stacks` and `facts.taskrunner` pin the root only, and a scope's `facts.stacks` is read as its `stacks`.
 
@@ -121,7 +121,7 @@ A workspace member may carry its own `.fleetlint.yaml`:
 version: 1
 facts: { tier: 2 }
 overrides:
-  lint/go-config: { enabled: false, reason: "uses the root .golangci.yml" }
+  lint/strict/go: { enabled: false, reason: "generated client, linted where it is generated" }
   taskrunner/targets: { severity: warning, reason: "a prototype" }
 exceptions:
   - rule: repo/no-tracked-junk
@@ -133,7 +133,7 @@ It applies to that scope only and may override facts, adjust rules (disable with
 
 ## overrides
 
-Adjustments to rules the catalogs brought in, keyed by rule id or by a pattern over ids (`"*"`, `"release/*"`; patterns apply first):
+Adjustments to rules the catalogs brought in, keyed by rule id or by a pattern over ids (`"*"`, `"release/*"`; patterns apply first). An override on a [capability](writing-rules.md#capabilities-one-requirement-one-implementation-per-stack) reaches every implementation (`lint/configured` for all stacks); `<capability>/<stack>` adjusts one (`lint/configured/go`). Exceptions work the same way.
 
 | Key | Effect |
 |---|---|

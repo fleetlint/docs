@@ -43,6 +43,10 @@ include:
 
 The job installs the release of the tag it is included from, with that tag's install script, and requires the cosign signature of its checksums. It reports the findings in the merge request's Code Quality widget and fails at `FLEETLINT_FAIL_ON` (default `error`).
 
+## What the CI rules read
+
+The `ci/*` and `release/*` rules read the CI configuration of every system fleetlint knows: GitHub, Gitea and Forgejo Actions workflows (`.github/workflows`, `.gitea/workflows`, `.forgejo/workflows`) and `.gitlab-ci.yml` with the local files it includes. A rule about something only one system has applies to that system only, for example `permissions:` (GitHub and Gitea) or `persist-credentials` on `actions/checkout` (Actions); each rule's page in the [rule reference](rules/_index.md) says which it reads. `fleetlint fix` writes a GitHub Actions check workflow; on GitLab, add a job that runs the task runner's `check`.
+
 ## Make
 
 ```make

@@ -31,14 +31,15 @@ Promote a repository the day something starts depending on it.
 - No large binaries in git outside git-lfs.
 - A dependency lockfile is committed for every package manager in use.
 - The toolchain version is pinned in the repository, so every machine and CI build with the same compiler or runtime.
+- A `CODEOWNERS` file routes review requests for every path.
 
-Checked by: `repo/no-tracked-junk`, `repo/no-tracked-env`, `repo/gitignore-present`, `repo/editorconfig`, `repo/gitattributes`, `repo/no-large-files`, `repo/lockfile-committed`, `repo/toolchain-pinned`.
+Checked by: `repo/no-tracked-junk`, `repo/no-tracked-env`, `repo/gitignore-present`, `repo/no-large-files` in `fleetlint:minimal`; `repo/editorconfig`, `repo/gitattributes`, `repo/lockfile-committed`, `repo/toolchain-pinned`, `repo/codeowners`. The lockfile and toolchain rules are [capabilities](writing-rules.md#capabilities-one-requirement-one-implementation-per-stack): each stack checks them with its own files ([matrix](rules/capabilities.md)).
 
 ## Slop
 
 The traces careless or generated code leaves behind: narration comments, placeholders, variant copies, swallowed errors, suppressions, skipped and trivial tests, report documents, vague commits. The full catalog, with what each one costs and how to clean it up, is in [slop.md](slop.md).
 
-Checked by: `slop/focused-tests`, `slop/conflict-markers`, `slop/scratch-scripts`, `slop/report-documents` in `fleetlint:recommended`; the heuristic `slop/*` rules in the add-on preset `fleetlint:slop`; `quality/no-slop-markers`.
+Checked by: `slop/conflict-markers` in `fleetlint:minimal`; `slop/focused-tests`, `slop/scratch-scripts`, `slop/report-documents` in `fleetlint:recommended`; the heuristic `slop/*` rules, `slop/marketing-words` and `slop/forced-unwraps` among them, in the add-on preset `fleetlint:slop`.
 
 ## Task-runner contract
 
@@ -88,17 +89,23 @@ Hooks run the project's own pinned tools through the task runner (`language: sys
 - Never exclude files to get a hook passing, and never bypass hooks; findings that cannot be fixed now go into the linter's baseline.
 - Polyglot repositories scope each stack's hooks with `files:`; `fleetlint fix` writes that for a nested project (hooks run inside its directory, on its files only). Monorepos with independent projects keep one configuration per project.
 
-Checked by: `hooks/config-present`, `hooks/shared-hygiene`, `hooks/secret-scan`, `hooks/conventional-commits`, `hooks/pre-push-check`, `lint/shell`.
+- Hook repositories are pinned to a version tag or a commit SHA, never a branch.
+
+Checked by: `hooks/config-present`, `hooks/secret-scan` in `fleetlint:minimal`; `hooks/shared-hygiene`, `hooks/conventional-commits`, `hooks/pre-push-check`, `hooks/revs-pinned`, `lint/shell`. The hook rules accept a `.pre-commit-config.yaml` (prek or pre-commit) or a lefthook configuration.
 
 ## Static analysis
 
 Each stack's strict linter and type-checker settings are in [stacks.md](stacks.md). Suppressions carry a reason on the same line or the line above; a suppression without one is removed by fixing the code.
 
-Checked by: `lint/go-config`, `lint/go-linters-enabled`, `lint/python-config`, `lint/python-rules-enabled`, `lint/rust-config`, `lint/rust-lints-denied`, `lint/node-config`, `lint/node-strict-flags`, `lint/kotlin-config`, `lint/flutter-config`, `lint/flutter-strict-modes`, `lint/kotlin-detekt-strict`, `lint/java-config`, `lint/dotnet-config`, `lint/cpp-config`, `lint/ruby-config`, `lint/php-config`, `lint/hugo-strict-build`, `lint/shell`. `fleetlint fix --apply` writes the configuration for every stack: `.golangci.yml`, `[tool.ruff]` and `[tool.mypy]` appended to pyproject.toml, `[lints]` appended to Cargo.toml, `eslint.config.mjs` plus the strict flags merged into tsconfig.json, `config/detekt/detekt.yml`, `analysis_options.yaml`, `config/checkstyle/checkstyle.xml`, `Directory.Build.props`, `.clang-tidy` and `.clang-format`, `.rubocop.yml`, `phpstan.neon.dist` and `.php-cs-fixer.dist.php`.
+- A formatter is configured and its check runs.
+- A linter is configured, with the stack's required checks switched on.
+- Where the language has a separate type checker or strict compiler modes (TypeScript, Python, PHP, Dart), it runs in strict mode.
+
+Checked by four [capabilities](writing-rules.md#capabilities-one-requirement-one-implementation-per-stack), each implemented per stack (`lint/configured/go`, `types/strict/node`, ...; the [matrix](rules/capabilities.md) shows which stack has which): `format/configured`, `lint/configured`, `lint/strict`, `types/strict`; and `lint/shell`. They apply at tiers 1 and 2 and read configuration from parent directories too, so a workspace member inherits the root's. `fleetlint fix --apply` writes the configuration for every stack: `.golangci.yml`, `[tool.ruff]` and `[tool.mypy]` appended to pyproject.toml, `[lints]` appended to Cargo.toml, `eslint.config.mjs` plus the strict flags merged into tsconfig.json, `config/detekt/detekt.yml`, `analysis_options.yaml`, `config/checkstyle/checkstyle.xml`, `Directory.Build.props`, `.clang-tidy` and `.clang-format`, `.rubocop.yml`, `phpstan.neon.dist` and `.php-cs-fixer.dist.php`.
 
 ## Tests
 
-*Review*, apart from the coverage gate.
+*Review*, apart from the coverage and mutation-testing gates.
 
 - Critical paths have characterization tests: the happy path and the failures that actually occur (unreachable, timeout, expired credentials, malformed input, interrupted operations, concurrent access).
 - Pure logic has unit tests; parsers and anything reading untrusted input have property or fuzz tests.
@@ -109,7 +116,7 @@ Checked by: `lint/go-config`, `lint/go-linters-enabled`, `lint/python-config`, `
 - No tests without assertions, no skipped or focused tests committed, no expected values changed to match buggy output, no automatic retries to hide a flaky test.
 - Coverage is a floor, not a goal: at least 80% on changed lines, 90% on core logic. Mutation testing on core modules shows whether the tests would notice a bug.
 
-Checked by: `quality/coverage-threshold`.
+Checked by: `quality/coverage-threshold`, `quality/mutation-gate`; `slop/skipped-tests`, `slop/trivial-asserts` in `fleetlint:slop`.
 
 ## Error handling
 
@@ -122,6 +129,8 @@ Checked by: `quality/coverage-threshold`.
 - Error messages say what failed and with which input.
 - No panics for recoverable conditions.
 
+The heuristics `slop/swallowed-errors` and `slop/forced-unwraps` in `fleetlint:slop` list candidates for review.
+
 ## Design
 
 *Review.*
@@ -131,6 +140,8 @@ Checked by: `quality/coverage-threshold`.
 - Types carry meaning: illegal states are unrepresentable, IDs and units have their own types.
 - Wire and storage models are separate from domain models and mapped by validating parsers at the boundary.
 - No dead code, commented-out blocks, near-duplicate implementations with suffixes such as `V2` or `New`, pass-through layers, or `utils` dumping grounds.
+
+Checked by: `quality/duplication-gate` (a duplication detector runs). The rest is *review*.
 
 ## Robustness
 
@@ -154,20 +165,24 @@ Checked by: `containers/dockerignore`, `containers/non-root-user`, `containers/b
 - No global "trust all certificates"; custom CAs are scoped to a host.
 - All external input is validated and bounded at the boundary.
 - Queries are parameterized, no shell strings are built, paths are joined safely.
-- CI workflows declare the least permissions they need, pin third-party actions to commit SHAs, and do not run untrusted pull-request code with secrets.
+- CI workflows declare the least permissions they need, pin third-party actions to commit SHAs (and GitLab includes to a SHA), and do not run untrusted pull-request code with secrets.
+- Data an outsider controls (issue and PR titles, branch names, commit messages) never reaches a CI script through `${{ }}`; it is passed through `env:`.
+- `actions/checkout` does not leave the token on disk (`persist-credentials: false`).
+- No download is piped into a shell in CI or a Dockerfile; tools come from a pinned action, a package manager or a checksummed file.
+- A SAST tool (CodeQL, Semgrep, GitLab SAST, SonarQube) scans the code.
 
-Checked by: `repo/no-tracked-env`, `hooks/secret-scan`, `ci/least-privilege`, `ci/actions-pinned`, `ci/no-pull-request-target`. The rest is *review*.
+Checked by: `repo/no-tracked-env`, `hooks/secret-scan` in `fleetlint:minimal`; `ci/least-privilege`, `ci/actions-pinned`, `ci/no-pull-request-target`, `ci/no-script-injection`, `ci/checkout-no-persist-credentials`, `ci/no-pipe-to-shell`, `ci/sast`, `hooks/revs-pinned`. The rest is *review*.
 
 ## Dependencies
 
 - Lockfiles are committed and verified on install (`npm ci`, `uv sync --locked`, `cargo --locked`, Gradle dependency verification).
 - Install scripts are disabled where the package manager allows it.
-- The `audit` target scans dependencies for known vulnerabilities and checks licenses against an allowlist compatible with the project's own license; exceptions are documented with a reason.
-- Updates are automated, so pinned does not become stale.
+- The `audit` target scans dependencies for known vulnerabilities, finds unused dependencies, and checks licenses against an allowlist compatible with the project's own license; exceptions are documented with a reason.
+- Updates are automated for every stack, GitHub Actions and Dockerfiles, so pinned does not become stale, and wait a few days after a release before they are proposed.
 - A new dependency has to beat about 100 lines of own code; check publisher, age and that the name is the package you meant.
 - A vendored or forked dependency is documented: upstream, base version, what changed and why.
 
-Checked by: `repo/lockfile-committed`, `deps/update-automation`, `deps/vulnerability-scan`, `deps/license-check`, `deps/install-scripts-disabled`.
+Checked by: `repo/lockfile-committed`, `deps/locked-install`, `deps/vulnerability-scan`, `deps/unused-check`, `deps/license-check` (capabilities, one implementation per stack, see the [matrix](rules/capabilities.md)); `deps/update-automation`, `deps/update-coverage`, `deps/update-cooldown`, `deps/install-scripts-disabled`, `deps/forks-documented`. Only a real invocation of a tool counts: an `echo`, a comment or an install line does not.
 
 ## Logging
 
@@ -187,25 +202,27 @@ Write what a reader cannot get from the code in 30 seconds, in plain factual pro
 - `CHANGELOG.md` in Keep a Changelog format.
 - Comments say why, never what.
 
-Checked by: `repo/readme-present`, `docs/architecture`, `docs/adr-directory`, `changelog/present`, `quality/no-slop-markers`.
+Checked by: `repo/readme-present`, `docs/architecture`, `docs/adr-directory`, `changelog/present`; `slop/marketing-words` and `slop/emoji-headings` in `fleetlint:slop`.
 
 ## Continuous integration
 
-CI runs the same `check` the hooks run, on pushes to the main branch and on pull requests, so it is the record that main was green and not a different subset of checks.
+CI runs the same `check` the hooks run, on pushes to the main branch and on pull requests, so it is the record that main was green and not a different subset of checks. Jobs have timeouts, superseded pull-request runs are cancelled, and the workflows themselves are linted (actionlint or zizmor).
 
-Checked by: `ci/check-workflow`, `ci/least-privilege`, `ci/actions-pinned`, `ci/job-timeouts`, `ci/concurrency-cancel`, `ci/no-pull-request-target`.
+The CI rules read GitHub, Gitea and Forgejo Actions workflows and `.gitlab-ci.yml` with the local files it includes. A rule about something only one system has, such as Actions `permissions:`, applies to that system only; each rule's page says which it reads.
+
+Checked by: `ci/check-workflow`, `ci/job-timeouts`, `ci/concurrency-cancel`, `ci/workflow-lint`, and the CI rules under [Security](#security).
 
 ## Releases
 
 - Semantic Versioning; one source of truth for the version.
 - The changelog is generated from Conventional Commits (git-cliff) and edited for clarity; breaking changes carry a migration note.
 - A `release` target refuses a dirty tree or a branch other than main, runs `check`, computes the version, writes the changelog and creates a signed tag. Pushing is a separate step.
-- A tag starts the release pipeline, which builds the artifacts, writes checksums, generates an SBOM per artifact, signs them and attests the build provenance.
-- Builds are reproducible: pinned toolchain, locked dependencies, version and commit embedded in the artifact.
+- A tag starts the release pipeline, which builds the artifacts, writes checksums, generates an SBOM per artifact, signs them and attests the build provenance. Release jobs run on hosted runners, and packages are published to the registry with trusted publishing (OIDC), not a stored token.
+- Builds are reproducible: pinned toolchain, locked dependencies, version and commit embedded in the artifact, timestamps and paths taken out (`-trimpath`, `SOURCE_DATE_EPOCH`, `--remap-path-prefix`).
 - Libraries run the stack's API-compatibility check against the previous release.
 - Every release has a way back.
 
-Checked by: `changelog/generator-configured`, `release/tag-triggered`, `release/semver-tags`, `release/checksums`, `release/sbom`, `release/signing`, `release/provenance`, `release/changelog-in-release`. A repository with its own pipeline passes when a known producer is present, or names its producer with `accept:`; see [writing-rules.md](writing-rules.md).
+Checked by: `changelog/generator-configured`, `release/tag-triggered`, `release/semver-tags`, `release/signed-tags`, `release/checksums`, `release/sbom`, `release/signing`, `release/provenance`, `release/changelog-in-release`, `release/trusted-publishing`, `release/hosted-builder`, `release/reproducible-build` (a capability), `release/api-compatibility`. A repository with its own pipeline passes when a known producer is present, or names its producer with `accept:`; see [writing-rules.md](writing-rules.md).
 
 ## Public repositories
 
@@ -213,9 +230,9 @@ Checked by: `changelog/generator-configured`, `release/tag-triggered`, `release/
 - `SECURITY.md` says how to report a vulnerability privately.
 - `CONTRIBUTING.md` covers setup, the `check` command and the commit convention; a code of conduct names a contact.
 - Issue and pull-request templates where the forge supports them.
-- No agent instruction files are tracked, and no commit carries an AI author, co-author trailer or "generated with" footer.
+- No agent instruction files are tracked, and no commit carries an AI tool's address as author or co-author, or a "generated with" footer.
 
-Checked by: `public/license`, `public/manifest-license`, `public/security-policy`, `public/contributing`, `public/code-of-conduct`, `public/issue-templates`, `public/no-agent-files`, `public/no-ai-attribution`.
+Checked by: `public/license` in `fleetlint:minimal`; `public/manifest-license`, `public/security-policy`, `public/contributing`, `public/code-of-conduct`, `public/issue-templates` in `fleetlint:recommended`; `public/no-agent-files`, `public/no-ai-attribution` in `fleetlint:slop`. `fleetlint:oss` runs the recommended ones whatever the detected visibility.
 
 ## User interfaces
 

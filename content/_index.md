@@ -5,7 +5,7 @@ description: "Policy for a fleet of repositories."
 
 # fleetlint
 
-Policy for a fleet of repositories. fleetlint checks how a repository is set up (hooks, task runner, lint configuration, CI, release pipeline) against a catalog of rules, reports how far it is from compliant, and tells you or your coding agent exactly how to close each gap.
+Policy for a fleet of repositories. fleetlint checks how a repository is set up (hooks, task runner, lint configuration, CI on GitHub, Gitea, Forgejo or GitLab, release pipeline) against a catalog of rules, reports how far it is from compliant, and tells you or your coding agent exactly how to close each gap.
 
 It does not lint code. It checks that the things which lint, test, build and release the code are present, wired together and configured the way you decided they should be, in every repository, the same way.
 
@@ -22,7 +22,7 @@ fleetlint fix --apply     # writes what can be written; never overwrites a file
 |---|---|
 | try it on a repository | [Getting started](getting-started.md) |
 | know what it checks and why | [The baseline](baseline.md), [stack profiles](stacks.md), [slop catalog](slop.md) |
-| look up a rule | [Rule catalog](rule-catalog.md), [rule reference](rules/_index.md) |
+| look up a rule | [Rule catalog](rule-catalog.md), [rule reference](rules/_index.md), [capability matrix](rules/capabilities.md) |
 | configure a repository | [Configuration](configuration.md) |
 | roll it out across a company | [Organisations](organisations.md), [fleet mode](fleet.md) |
 | write rules | [Writing rules](writing-rules.md), [CEL reference](cel-reference.md) |

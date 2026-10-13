@@ -21,7 +21,7 @@ Several tools look at a repository instead of at its code. They answer different
 
 Use it when the question is the security posture of an open-source project, yours or a dependency's, measured the same way for everyone. Its checks and scoring are the same for all projects by design.
 
-fleetlint overlaps where a check can be read from the files (pinned actions, workflow permissions, a security policy, signed releases with an SBOM) and differs in purpose: its rules are your policy, with tiers, exceptions with reasons, and a report across your repositories. It reads the working tree and does not look at branch protection or review history. The two fit together: Scorecard for the outside view of public projects, fleetlint for the setup you want in every repository including private ones.
+fleetlint overlaps where a check can be read from the files (pinned actions, workflow permissions, script injection in workflows, a SAST tool, update automation, a security policy, signed releases with an SBOM) and differs in purpose: its rules are your policy, with tiers, exceptions with reasons, and a report across your repositories. It reads the working tree and does not look at branch protection or review history. The two fit together: Scorecard for the outside view of public projects, fleetlint for the setup you want in every repository including private ones.
 
 ## repolinter
 

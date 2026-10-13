@@ -35,7 +35,7 @@ cd your-repo
 fleetlint
 ```
 
-With no configuration fleetlint discovers the stacks, the forge, the task runner, nested projects and whether a dev container is used, and applies the `recommended` preset. The report lists each finding with what to do about it; findings marked `*` are the ones `fleetlint fix` can repair. The last line names the fleetlint and catalog versions that produced it.
+With no configuration fleetlint discovers the stacks, the forge, the CI system (GitHub, Gitea or Forgejo Actions, GitLab CI), the task runner, nested projects and whether a dev container is used, and applies the `recommended` preset. Requirements that differ by stack, such as a configured linter or a committed lockfile, are checked by each detected stack's own implementation; the [capability matrix](rules/capabilities.md) shows which stack has which. The report lists each finding with what to do about it; findings marked `*` are the ones `fleetlint fix` can repair. The last line names the fleetlint and catalog versions that produced it.
 
 Exit codes: 0 clean, 1 findings at or above `--fail-on` (default `error`), 2 configuration error, 3 internal error.
 
@@ -61,7 +61,7 @@ fleetlint fix             # dry run: what it would create, untrack or edit
 fleetlint fix --apply
 ```
 
-`fix` creates missing files from templates (editor settings, hook configuration, a task runner file, a check workflow, linter configuration), untracks files that should not be in git, and adds values to existing manifests. It never overwrites a file and never changes a key that is already set. What it writes belongs to your repository: edit it freely; the rules check what the files achieve, not that they match a template.
+`fix` creates missing files from templates (editor settings, hook configuration, a task runner file, a check workflow, linter, formatter and type-checker configuration), untracks files that should not be in git, and adds values to existing manifests. It never overwrites a file and never changes a key that is already set. What it writes belongs to your repository: edit it freely; the rules check what the files achieve, not that they match a template.
 
 The rest needs a person or a coding agent:
 

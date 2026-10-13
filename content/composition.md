@@ -12,8 +12,9 @@ A repository's effective rule set comes from several places: the presets, an org
 
 | Term | Meaning |
 |---|---|
-| **rule** | One check with an id (`lint/go-config`). The id is the rule's identity everywhere: reports, exceptions, overrides, explain pages. |
-| **library** | The catalog repository's `rules/<family>/<name>.yaml` files, one rule per file, the path spelling the id. Every catalog version ships one; a catalog may ship its own `rules/` next to it. |
+| **rule** | One check with an id (`repo/readme-present`). The id is the rule's identity everywhere: reports, exceptions, overrides, explain pages. |
+| **capability** | A rule that states one requirement and is checked by an implementation per stack (`lint/configured`, implemented by `lint/configured/go`, `lint/configured/python`, ...). See [capabilities](writing-rules.md#capabilities-one-requirement-one-implementation-per-stack). |
+| **library** | The catalog repository's `rules/<family>/<name>.yaml` files, one rule per file, the path spelling the id; a capability's implementations at `rules/<family>/<name>/<stack>.yaml`. Every catalog version ships one; a catalog may ship its own `rules/` next to it. |
 | **catalog version** | One release of [fleetlint/catalog](https://github.com/fleetlint/catalog): presets, library and fix templates together. The binary embeds one; `catalog: {version: …}` chooses another. **A run uses exactly one.** |
 | **catalog** | A YAML document with `metadata` (name, version, engine, `layer`, `catalog`), `includes`, a `rules` list, `overrides` and `exceptions`. Presets, organisation and team catalogs, and the repository's own file are all catalogs. |
 | **preset** | A catalog that is part of the catalog version (`fleetlint:minimal`, `recommended`, `strict`, `oss`, `slop`). Presets define no rules: they *select* from the library or *override* another preset. |
@@ -47,9 +48,9 @@ The effective rule set is computed once, at load time:
 sources.yaml:   catalog: {version: v0.2.0}   extends: [fleetlint:recommended, org]
 .fleetlint.yaml: extends: [team/platform]
 
-fleetlint:recommended   layer preset   includes minimal (7) + use: repo/*, ci/*, lint/*, … (76)
+fleetlint:recommended   layer preset   includes minimal (8) + use: repo/*, ci/*, lint/*, … (71)
 org                     layer org      catalog v0.2.0 ✓   use: slop/*  +  acme/owner-file  +  overrides "release/*": {locked: true}
-team/platform           layer team     catalog v0.2.0 ✓   lint/go-config redefined inline (weakened: recorded)
+team/platform           layer team     catalog v0.2.0 ✓   lint/shell redefined inline (weakened: recorded)
 .fleetlint.yaml         layer repo     overrides quality/coverage-threshold: {params: {min: 90}}   exceptions: …
 ```
 
@@ -86,17 +87,23 @@ An override can set severity (`severity:` or `raise: N`), `params` (merged key b
 
 **Overwrite: define the id inline in a later catalog.** The new text is the rule. The earlier definition contributes its lock (which forbids the overwrite) and its floor (which the new severity must respect and which stays), nothing else. Use this when the *check* has to differ, not just its parameters. Only catalogs can overwrite; the repository adjusts.
 
-**Run two in parallel: a new id.** Give yours an id in your own family (`acme/go-config`) and leave the built-in one in place, or disable it with a reason:
+**Run two in parallel: a new id.** Give yours an id in your own family (`acme/go-lint`) and leave the built-in one in place, or disable it with a reason:
 
 ```yaml
 rules:
-  - id: acme/go-config
+  - id: acme/go-lint
     …
 overrides:
-  lint/go-config: {enabled: false, reason: "replaced by acme/go-config, which also checks the forbidden imports"}
+  lint/strict/go: {enabled: false, reason: "replaced by acme/go-lint, which also checks the forbidden imports"}
 ```
 
 Ids never merge. Two rules that check similar things are two findings, two explain pages, two exceptions; the report says why the original is off.
+
+## Capabilities and their implementations
+
+A capability and its implementations are selected, adjusted and bound together. `use: lint/configured` selects the capability with every implementation; an override, an exception or a policy written for the capability id reaches all of them, and one written for `lint/configured/go` reaches that stack only. Disabling a capability is recorded once, not once per stack. Through the capability, `when` replaces the shared gate and leaves each implementation's own condition alone, and `accept:` reaches the outcome implementations.
+
+An organisation catalog that ships `rules/` can add an implementation without copying the capability: `rules/lint/configured/terraform.yaml` in that catalog inherits title, severity, requirement and fix from the fleetlint capability. Stack definitions come from the catalog version the run uses (`stacks/` in fleetlint/catalog, or in the fork named by `catalog: {repo: ...}`).
 
 ## Policy: what a lock, a floor and `exceptions: false` hold
 

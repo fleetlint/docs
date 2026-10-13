@@ -8,7 +8,7 @@ description: "The traces careless or generated code leaves behind, and the rule 
 
 The traces careless or generated code leaves behind. Experienced reviewers notice them within minutes, and most of them predict real bugs. Each entry names the rule that finds it, or says that it is a review item.
 
-The rules are in two places. `fleetlint:recommended` carries the four that are never acceptable in a commit (`slop/focused-tests`, `slop/conflict-markers`, `slop/scratch-scripts`, `slop/report-documents`). The preset `fleetlint:slop` carries the heuristics: add it next to another preset.
+The rules are in three places. `fleetlint:minimal` carries `slop/conflict-markers`; `fleetlint:recommended` adds the other three that are never acceptable in a commit (`slop/focused-tests`, `slop/scratch-scripts`, `slop/report-documents`). The preset `fleetlint:slop` carries the heuristics, and the two rules about agent traces in public repositories (`public/no-agent-files`, `public/no-ai-attribution`): add it next to another preset.
 
 ```yaml
 extends: [fleetlint:recommended, fleetlint:slop]
@@ -49,7 +49,8 @@ The heuristics are regular expressions over tracked source files (vendored, gene
 | Smell | Why it matters | Rule / clean up |
 |---|---|---|
 | Empty catches, `except: pass`, `_ = err`, `.catch(() => {})` | failures vanish | `slop/swallowed-errors` (single-line forms); the stack's linter for the rest |
-| Escape hatches: `any`, `@ts-ignore`, `# type: ignore`, `!!`, `.unwrap()`, `// ignore:`, `nolint` | turns the checker off exactly where it would help | `slop/escape-hatches` lists them. Fix the type; justified suppressions carry a reason |
+| Escape hatches: `any`, `@ts-ignore`, `# type: ignore`, `// ignore:`, `nolint` | turns the checker off exactly where it would help | `slop/escape-hatches` lists them. Fix the type; justified suppressions carry a reason |
+| Forced unwraps: `.unwrap()` in Rust, `!!` in Kotlin, `try!` in Swift, outside tests | a crash where an error was expected | `slop/forced-unwraps` lists them. Handle the case, or state the invariant with `.expect("why")` |
 | Debug-print sprawl | log noise, leaks data | `slop/debug-output`. Structured logger |
 | Disabled TLS verification, `eval`, `chmod 777`, wildcard CORS | a shortcut that removes a protection for everyone | `slop/insecure-patterns` |
 | Fire-and-forget async, missing awaits, listeners and timers never cancelled | leaks, lost errors | review; unawaited-future lints |
@@ -82,7 +83,7 @@ The heuristics are regular expressions over tracked source files (vendored, gene
 | Scratch scripts in the root: `fix_imports.py`, `debug-auth.js`, `tmp_check.sh` | unmaintained code paths | `slop/scratch-scripts`. Real tools go in `scripts/` |
 | Report documents: `IMPLEMENTATION_SUMMARY.md`, `FIXES.md`, `REFACTORING_PLAN.md`, `NEXT_STEPS.md` | always stale | `slop/report-documents` |
 | Tracked `.env` files, keys, tokens | credential leak | `repo/no-tracked-env`, `hooks/secret-scan`. Rotate what leaked |
-| Agent instruction files in public repositories | a public repository shows what its maintainers wrote | `public/no-agent-files` |
+| Agent instruction files in public repositories (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursorrules`, `.windsurfrules`, `.clinerules`, `.aider*`, `.claude/`, `.cursor/`) | a public repository shows what its maintainers wrote | `public/no-agent-files` |
 | Merge conflict markers | the file means what neither side intended | `slop/conflict-markers` (error) |
 | Lint rules disabled in configuration to get green | hides real bugs | review. Ratchet with a baseline instead |
 
@@ -90,7 +91,7 @@ The heuristics are regular expressions over tracked source files (vendored, gene
 
 | Smell | Why it matters | Rule / clean up |
 |---|---|---|
-| Marketing adjectives (the list is in the rule) | says nothing a reader can act on | `quality/no-slop-markers` |
+| Marketing filler: seamless, blazing fast, cutting-edge, leverage, delve (the list is in the rule) | says nothing a reader can act on | `slop/marketing-words` (Markdown outside code blocks and CHANGELOG.md) |
 | Emoji headings | break anchors and search | `slop/emoji-headings` |
 | Feature lists the code does not implement; badges for services that do not exist | misleading | review. Every claim is true today |
 | Overview, Conclusion and Summary filler; the same content in several files | walls of text nobody reads | review. One place per fact |
@@ -104,4 +105,4 @@ The heuristics are regular expressions over tracked source files (vendored, gene
 | Subjects that are not Conventional Commits | changelog and version cannot be computed | `slop/non-conventional-commits` |
 | Huge commits mixing many concerns | cannot be reviewed or reverted | `slop/huge-commits` |
 | A message that does not match the diff | misleading history | review. Write the message from the diff |
-| AI author, co-author trailers or "generated with" footers in public repositories | a public history shows human authorship | `public/no-ai-attribution` |
+| AI author, co-author trailers or "generated with" footers in public repositories | a public history shows human authorship | `public/no-ai-attribution` (AI tools' addresses and generator footers; names are not read) |
