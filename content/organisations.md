@@ -127,7 +127,7 @@ Repositories should not carry URLs and pins for every catalog. An organization p
 ```yaml
 # sources.yaml
 version: 1
-catalog: { version: v0.1.0 }         # the fleetlint catalog version every repository runs with
+catalog: { version: v0.1.0 }         # the fleetlint catalog version every repository runs with (or {oci: ghcr.io/fleetlint/catalog:v0.1.0})
 extends: [fleetlint:recommended, org] # the baseline every repository gets, before its own extends
 catalogs:
   org: git+https://git.example.com/platform/standards.git//org/catalog.yaml@v3.2.0#sha256-<hex>

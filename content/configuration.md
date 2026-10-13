@@ -80,6 +80,15 @@ extends: [fleetlint:recommended]
 - An organisation or team catalog states in its `metadata.catalog` which version it builds on. If that is not the run's version, the run fails with both versions named; this is what makes the catalog mean the same rules in every repository.
 - The version is fetched once with git, using the credentials git already has, and kept in the user's cache directory (`FLEETLINT_CACHE_DIR` overrides the location, for CI). Later runs, hooks included, read the cache and need no network.
 - A commit SHA cannot move. A tag can; the report shows the commit a tag resolved to when it was fetched.
+- The same version also comes from a registry: every catalog tag is published as a signed OCI artifact holding the whole catalog (presets, rules, stacks, templates, renamed ids). Pin it instead of the git tag where git access is awkward or a registry is the trusted source:
+
+  ```yaml
+  catalog:
+    oci: ghcr.io/fleetlint/catalog:v0.1.0      # or ...:v0.1.0@sha256:<digest> to pin the content
+  extends: [fleetlint:recommended]
+  ```
+
+  A tag of `ghcr.io/fleetlint/catalog` is verified against the signature of the catalog repository's publish workflow; a mirror or a fork at a tag needs `signers` in the sources file; a `@sha256:` digest needs neither. `oci` names the version on its own (no `version` or `repo` next to it), and `ghcr.io/fleetlint/catalog:v0.1.0` is the same version as the git tag `v0.1.0` for every catalog that builds on it. The artifact is read once per run.
 - A catalog states the engine level it was written for (`metadata.engine`). A version this binary cannot run is refused with one message that says whether to upgrade fleetlint or choose another catalog version, instead of rules failing one by one.
 
 ## facts
