@@ -7,9 +7,13 @@
 {{- if not $title }}{{ with findRESubmatch `(?m)^# (.+)$` .RawContent 1 }}{{ $title = index (index . 0) 1 }}{{ end }}{{ end -}}
 <title>{{ if and $title (ne $title site.Title) }}{{ $title }} · {{ end }}{{ site.Title }}</title>
 <meta name="description" content="{{ .Description | default site.Params.description }}">
-{{- $latest := .Permalink -}}
-{{- with site.Params.version }}{{ $latest = printf "%s%s" site.Params.latest (strings.TrimPrefix (printf "/%s/" .) $.RelPermalink) }}{{ end }}
-<link rel="canonical" href="{{ $latest }}">
+{{- $versions := partial "versions.html" . -}}
+{{- $latest := dict -}}
+{{- range $versions }}{{ if .latest }}{{ $latest = . }}{{ end }}{{ end -}}
+{{- $current := site.Version.Name -}}
+<link rel="canonical" href="{{ $latest.url | absURL }}">
+{{- if eq $current "next" }}
+<meta name="robots" content="noindex">{{ end }}
 <link rel="icon" href="{{ "favicon.ico" | relURL }}" sizes="any">
 <link rel="icon" href="{{ "favicon.svg" | relURL }}" type="image/svg+xml">
 <link rel="apple-touch-icon" href="{{ "apple-touch-icon.png" | relURL }}">
@@ -24,14 +28,27 @@
 <header class="top">
   <a class="brand" href="{{ site.Home.RelPermalink }}"><img src="{{ "favicon.svg" | relURL }}" width="22" height="22" alt="">fleetlint</a>
   <span class="tagline">Policy for a fleet of repositories</span>
-  <select class="version" id="version" aria-label="Documentation version" hidden></select>
-  <a class="toplink" href="{{ "getting-started/" | relURL }}">Getting started</a>
+  {{- if gt (len $versions) 1 }}
+  <details class="version">
+    <summary aria-label="Documentation version">{{ $current }}{{ if site.Version.IsDefault }} (latest){{ end }}</summary>
+    <ul>
+    {{- range $versions }}
+      <li><a href="{{ .url }}"{{ if .current }} aria-current="true"{{ end }}>{{ .name }}{{ if .latest }} (latest){{ else if eq .name "next" }} (unreleased){{ end }}</a></li>
+    {{- end }}
+    </ul>
+  </details>
+  {{- end }}
+  <a class="toplink" href="{{ partial "url.html" "/getting-started" }}">Getting started</a>
   <a class="repo" href="https://github.com/fleetlint/fleetlint" aria-label="fleetlint on GitHub" title="fleetlint on GitHub"><svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
 </header>
 <div class="layout">
   {{ partial "nav.html" . }}
-  <main id="content" data-pagefind-body>
-    {{ with site.Params.version }}<p class="banner" data-pagefind-ignore>These pages document fleetlint {{ . }}. <a href="{{ $latest }}">The latest release</a> is documented at the root of the site.</p>{{ end }}
+  <main id="content" data-pagefind-body data-pagefind-filter="version:{{ $current }}">
+    {{- if eq $current "next" }}
+    <p class="banner" data-pagefind-ignore>Unreleased: these pages describe the next release of fleetlint. The latest release is documented in <a href="{{ $latest.url }}">{{ $latest.name }}</a>.</p>
+    {{- else if not site.Version.IsDefault }}
+    <p class="banner" data-pagefind-ignore>These pages document fleetlint {{ $current }}. The latest release is <a href="{{ $latest.url }}">{{ $latest.name }}</a>.</p>
+    {{- end }}
     {{ block "main" . }}{{ end }}
   </main>
 </div>
@@ -43,11 +60,11 @@
     </div>
     <nav class="foot-col" aria-label="Documentation">
       <h2>Docs</h2>
-      <a href="{{ "getting-started/" | relURL }}">Getting started</a>
-      <a href="{{ "baseline/" | relURL }}">The baseline</a>
-      <a href="{{ "rules/" | relURL }}">Rule reference</a>
-      <a href="{{ "rules/capabilities/" | relURL }}">Capabilities</a>
-      <a href="{{ "writing-rules/" | relURL }}">Writing rules</a>
+      <a href="{{ partial "url.html" "/getting-started" }}">Getting started</a>
+      <a href="{{ partial "url.html" "/baseline" }}">The baseline</a>
+      <a href="{{ partial "url.html" "/rules" }}">Rule reference</a>
+      {{ with site.GetPage "/rules/capabilities" }}<a href="{{ .RelPermalink }}">Capabilities</a>{{ end }}
+      <a href="{{ partial "url.html" "/writing-rules" }}">Writing rules</a>
     </nav>
     <nav class="foot-col" aria-label="Source">
       <h2>Source</h2>
@@ -66,27 +83,9 @@
     </nav>
   </div>
   <div class="foot-meta">
-    <span>MIT licensed. Documents {{ with site.Params.version }}fleetlint {{ . }}{{ else }}the latest release{{ end }}.</span>
-    {{ with .File }}<a href="{{ site.Params.source }}/blob/main/content/{{ .Path }}">Source of this page</a>{{ end }}
+    <span>MIT licensed. Documents {{ if eq $current "next" }}the next release{{ else }}fleetlint {{ $current }}{{ end }}.</span>
+    {{ with .File }}<a href="{{ site.Params.source }}/blob/main/{{ if eq $current "next" }}content{{ else }}versions/{{ $current }}{{ end }}/{{ .Path }}">Source of this page</a>{{ end }}
   </div>
 </footer>
-<script>
-  // versions.json is written at the site root by the deploy workflow; without it the switcher stays hidden.
-  (function () {
-    var current = {{ site.Params.version | default "" }}, prefix = current ? "/" + current + "/" : "/";
-    var select = document.getElementById("version");
-    fetch("/versions.json").then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
-      if (!v || !v.versions || !v.versions.length) return;
-      [["", "latest (" + v.latest + ")"]].concat(v.versions.map(function (x) { return [x, x]; })).forEach(function (o) {
-        select.add(new Option(o[1], o[0], false, o[0] === current));
-      });
-      select.hidden = false;
-      select.addEventListener("change", function () {
-        var path = location.pathname.indexOf(prefix) === 0 ? location.pathname.slice(prefix.length) : "";
-        location.href = (select.value ? "/" + select.value + "/" : "/") + path + location.hash;
-      });
-    }).catch(function () {});
-  })();
-</script>
 </body>
 </html>

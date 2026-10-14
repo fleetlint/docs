@@ -1,0 +1,7 @@
+# The deployed site: next (content/) is not rendered, so it is neither published nor linked.
+[[cascade]]
+  [cascade.build]
+    render = "never"
+    list = "never"
+  [cascade.target.sites.matrix]
+    versions = ["next"]

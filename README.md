@@ -45,7 +45,13 @@ Renovate reads `mise.toml` for the toolchain, the pinned actions in the workflow
 
 A push to `main` (and a nightly run, for the demo) builds the complete site (`.gitea/workflows/deploy.yml`): Hugo output, the fleet report under `demo/report/`, the search index. A shared deploy workflow receives it as the `site` artifact and publishes it to fleetlint.org. The root documents the latest release.
 
-Each release's docs are published under `/vX.Y/` (the minor of `FLEETLINT_VERSION`); the current minor is the root of the site. A release is a signed `vX.Y.Z` tag on the commit that bumps `FLEETLINT_VERSION`. Every deploy builds the newest tag of each earlier minor with that tag's `make snapshot` (`scripts/versions.sh`) and writes the `versions.json` for the version switcher, so nothing is stored between runs. Old versions show a banner and point their canonical link at the root.
+The docs are versioned like Docusaurus does it, with Hugo's versions: `content/` is *next*, the docs of the coming release, and `versions/vX.Y/` holds each released minor. Every version is built with the same layouts, so all look alike. The newest directory in `versions/` is the latest release at the site root; earlier ones are under `/vX.Y/`, with a banner and a canonical link to the latest. Next is shown by `make serve` at `/next/` and checked by `make check`, but not deployed.
+
+- Write docs for the coming release in `content/`, whenever they are ready.
+- Fix an error in a released version by editing its `versions/vX.Y/` directory (and `content/` when next has it too); the next deploy publishes it.
+- When fleetlint releases a new minor: bump `FLEETLINT_VERSION`, `make gen`, then `make cut` copies `content/` to `versions/vX.Y/` and makes it the latest. A patch release updates `versions/vX.Y/` in place.
+
+`config/_default/hugo.toml` is generated from the directories in `versions/` (`make versions`); `config/production/hugo.toml` keeps next out of the deployed site.
 
 ## License
 

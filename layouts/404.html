@@ -1,6 +1,6 @@
 {{ define "main" }}
 <article>
 <h1>Page not found</h1>
-<p>The page may have moved. Start from the <a href="{{ site.Home.RelPermalink }}">overview</a> or the <a href="{{ "rule-catalog/" | relURL }}">rule catalog</a>.</p>
+<p>The page may have moved. Start from the <a href="{{ site.Home.RelPermalink }}">overview</a> or the <a href="{{ partial "url.html" "/rule-catalog" }}">rule catalog</a>.</p>
 </article>
 {{ end }}

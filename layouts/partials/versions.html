@@ -1,0 +1,11 @@
+{{- /* Every published version of the docs, newest first, each with this page in it (or its start page when it lacks the page). */ -}}
+{{- $versions := slice -}}
+{{- range hugo.Sites -}}
+  {{- if .Home.RelPermalink -}}{{/* empty for next in production: not rendered */}}
+    {{- $name := .Version.Name -}}
+    {{- $url := .Home.RelPermalink -}}
+    {{- range $.Rotate "version" }}{{ if eq .Site.Version.Name $name }}{{ $url = .RelPermalink }}{{ end }}{{ end -}}
+    {{- $versions = $versions | append (dict "name" $name "url" $url "latest" .Version.IsDefault "current" (eq $name site.Version.Name)) -}}
+  {{- end -}}
+{{- end -}}
+{{- return $versions -}}

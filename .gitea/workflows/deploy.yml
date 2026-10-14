@@ -1,7 +1,7 @@
 # Builds the complete site (Hugo, the fleet report as the demo, the Pagefind search
-# index, the frozen docs of earlier releases) and deploys it to fleetlint.org through
+# index, every released version of the docs) and deploys it to fleetlint.org through
 # the shared deploy workflow, which only receives the built site as an artifact.
-# Each release tag of an earlier minor is built into /vX.Y/; the current minor is the root.
+# The latest release (the newest versions/vX.Y/) is the root, earlier ones are under /vX.Y/; next is not deployed.
 # Gitea reads .gitea/workflows/ instead of .github/workflows/ when it exists.
 name: deploy
 
@@ -29,7 +29,6 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0          # the release tags the earlier versions are built from
           persist-credentials: false
       - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
         # installs the versions in mise.toml: hugo, node, python, go, gitleaks
@@ -41,11 +40,8 @@ jobs:
           make tools
           PATH="$(go env GOPATH)/bin:$PATH" make demo
       - name: Search index
-        # before the snapshots are added: each brings its own index
+        # one index over every version; the search page filters it to the version being read
         run: make search-index
-      - name: Add the docs of earlier releases under /vX.Y/
-        # every deploy carries all versions: the deploy rsyncs with --delete
-        run: scripts/versions.sh public "$(make -s docs-version)"
       - name: Upload built site
         # NOT actions/upload-artifact: the official action detects Gitea as GHES and aborts
         uses: https://github.com/christopherhx/gitea-upload-artifact@v4
