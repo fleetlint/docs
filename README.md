@@ -45,7 +45,7 @@ Renovate reads `mise.toml` for the toolchain, the pinned actions in the workflow
 
 A push to `main` (and a nightly run, for the demo) builds the complete site (`.gitea/workflows/deploy.yml`): Hugo output, the fleet report under `demo/report/`, the search index. A shared deploy workflow receives it as the `site` artifact and publishes it to fleetlint.org. The root documents the latest release.
 
-Each release's docs are frozen under `/vX.Y/` (the minor of `FLEETLINT_VERSION`, see `make snapshot`). Releases are manual: after the version bump has landed, run the deploy workflow on `main` with `release` checked. It stores the snapshot in the Gitea package registry as `fleetlint-docs` (`scripts/snapshots.sh`; a patch release replaces its minor's snapshot), and every deploy adds the stored snapshots and the `versions.json` for the version switcher. Old versions show a banner and point their canonical link at the root. The deploy needs a `PACKAGES_TOKEN` secret with `read:package` and `write:package`.
+Each release's docs are published under `/vX.Y/` (the minor of `FLEETLINT_VERSION`); the current minor is the root of the site. A release is a signed `vX.Y.Z` tag on the commit that bumps `FLEETLINT_VERSION`. Every deploy builds the newest tag of each earlier minor with that tag's `make snapshot` (`scripts/versions.sh`) and writes the `versions.json` for the version switcher, so nothing is stored between runs. Old versions show a banner and point their canonical link at the root.
 
 ## License
 

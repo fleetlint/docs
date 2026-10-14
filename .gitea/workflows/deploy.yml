@@ -1,7 +1,7 @@
 # Builds the complete site (Hugo, the fleet report as the demo, the Pagefind search
 # index, the frozen docs of earlier releases) and deploys it to fleetlint.org through
 # the shared deploy workflow, which only receives the built site as an artifact.
-# A manual run with `release` freezes the docs of the current release first.
+# Each release tag of an earlier minor is built into /vX.Y/; the current minor is the root.
 # Gitea reads .gitea/workflows/ instead of .github/workflows/ when it exists.
 name: deploy
 
@@ -13,11 +13,6 @@ on:
   schedule:
     - cron: "17 4 * * *"   # nightly: refreshes the demo report
   workflow_dispatch:
-    inputs:
-      release:
-        description: "Freeze the docs of FLEETLINT_VERSION under /vX.Y/ (replaces an earlier snapshot of that minor)"
-        type: boolean
-        default: false
 
 # Cancel superseded PR builds; don't cancel main (avoid half-deploys)
 concurrency:
@@ -34,6 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0          # the release tags the earlier versions are built from
           persist-credentials: false
       - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
         # installs the versions in mise.toml: hugo, node, python, go, gitleaks
@@ -47,23 +43,9 @@ jobs:
       - name: Search index
         # before the snapshots are added: each brings its own index
         run: make search-index
-      - name: Freeze this release's docs
-        if: github.event_name == 'workflow_dispatch' && (github.event.inputs.release == 'true' || inputs.release == true) && github.ref == 'refs/heads/main'
-        env:
-          GITEA_URL: ${{ github.server_url }}
-          GITEA_OWNER: johnny   # owns the fleetlint-docs package and PACKAGES_TOKEN, wherever the repository lives
-          GITEA_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
-        run: |
-          make snapshot
-          scripts/snapshots.sh upload "$(make -s docs-version)" snapshot
       - name: Add the docs of earlier releases under /vX.Y/
-        if: github.event_name != 'pull_request'
-        env:
-          GITEA_URL: ${{ github.server_url }}
-          GITEA_OWNER: johnny   # owns the fleetlint-docs package and PACKAGES_TOKEN, wherever the repository lives
-          GITEA_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
         # every deploy carries all versions: the deploy rsyncs with --delete
-        run: scripts/snapshots.sh fetch public "$(make -s docs-version)"
+        run: scripts/versions.sh public "$(make -s docs-version)"
       - name: Upload built site
         # NOT actions/upload-artifact: the official action detects Gitea as GHES and aborts
         uses: https://github.com/christopherhx/gitea-upload-artifact@v4
