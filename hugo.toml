@@ -136,9 +136,3 @@ disableKinds = ["taxonomy", "term", "RSS"]
   parent = "about"
   pageRef = "/project"
   weight = 63
-
-[[menu.main]]
-  name = "Search"
-  identifier = "search"
-  pageRef = "/search"
-  weight = 70

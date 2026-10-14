@@ -7,7 +7,10 @@
 <script src="/pagefind/pagefind-ui.js"></script>
 <script>
   // one index for the whole site (pagefind runs over public/); results stay in the version being read
-  if (window.PagefindUI) { new PagefindUI({ element: "#search", showSubResults: true }).triggerFilters({ version: [{{ site.Version.Name }}] }); }
+  if (window.PagefindUI) { var ui = new PagefindUI({ element: "#search", showSubResults: true, autofocus: true });
+    ui.triggerFilters({ version: [{{ site.Version.Name }}] });
+    var q = new URLSearchParams(location.search).get("q");   // from the header's search form without JavaScript
+    if (q) ui.triggerSearch(q); }
   else { document.getElementById("search").textContent = "The search index is built when the site is deployed; it is not part of a local preview."; }
 </script>
 </article>
