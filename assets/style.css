@@ -86,6 +86,9 @@ td code { white-space: nowrap; }
 .version a:hover { background: var(--soft); }
 .version a[aria-current] { font-weight: 600; }
 .pagefind-ui__filter-panel { display: none; }
+/* Pagefind's UI has fixed light colours; these follow the theme's tokens, light and dark */
+.pagefind-ui { --pagefind-ui-scale: 0.9; --pagefind-ui-primary: var(--accent); --pagefind-ui-text: var(--fg); --pagefind-ui-background: var(--bg); --pagefind-ui-border: var(--line); --pagefind-ui-tag: var(--soft); --pagefind-ui-border-width: 1px; --pagefind-ui-border-radius: 4px; --pagefind-ui-font: var(--sans); }
+.pagefind-ui .pagefind-ui__result-excerpt mark, .pagefind-ui .pagefind-ui__result-title mark { all: unset; background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--fg); border-radius: 2px; }
 .banner { background: var(--soft); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 4px; padding: 10px 14px; font-size: 14.5px; }
 .bottom { border-top: 1px solid var(--line); background: var(--soft); padding: 32px 0 20px; color: var(--muted); font-size: 14px; }
 .foot { display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 32px; max-width: 1180px; margin: 0 auto; padding: 0 24px; }
