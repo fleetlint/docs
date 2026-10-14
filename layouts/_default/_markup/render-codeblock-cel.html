@@ -1,0 +1,2 @@
+{{- /* Chroma has no CEL lexer; JavaScript's covers its strings, numbers, operators and calls. */ -}}
+{{- transform.Highlight .Inner "javascript" (dict "noClasses" false) | replaceRE `"(language-)?javascript"` `"${1}cel"` | safeHTML -}}

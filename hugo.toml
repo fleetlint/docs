@@ -8,7 +8,7 @@ disableKinds = ["taxonomy", "term", "RSS"]
   source = "https://github.com/fleetlint/docs"
 
 [markup.highlight]
-  codeFences = false   # plain code blocks: no highlighter theme to keep in step with the color scheme
+  noClasses = false   # Chroma writes classes; assets/style.css colours them from the theme's tokens, light and dark
 
 [markup.tableOfContents]
   startLevel = 2

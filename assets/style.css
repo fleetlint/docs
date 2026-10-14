@@ -1,11 +1,13 @@
 :root {
   --bg: #fdfdfc; --fg: #1c1c1a; --muted: #62625c; --line: #dedcd5; --soft: #f3f2ee;
   --accent: #1d5fa8; --mark: #0f3d73;
+  --code-key: #1d5fa8; --code-string: #2b6e2b; --code-comment: #6b6b63; --code-number: #9a4a12; --code-keyword: #7b3aa0; --code-builtin: #0d6470;
   --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #151614; --fg: #e9e8e3; --muted: #a3a29b; --line: #32332f; --soft: #1e1f1c; --accent: #86b7ef; --mark: #b9d6f7; }
+  :root { --bg: #151614; --fg: #e9e8e3; --muted: #a3a29b; --line: #32332f; --soft: #1e1f1c; --accent: #86b7ef; --mark: #b9d6f7;
+    --code-key: #86b7ef; --code-string: #9ccf86; --code-comment: #8f8e86; --code-number: #e6a36b; --code-keyword: #cfa3ec; --code-builtin: #7cc9d3; }
 }
 * { box-sizing: border-box; }
 html { font: 16px/1.6 var(--sans); background: var(--bg); color: var(--fg); -webkit-text-size-adjust: 100%; }
@@ -61,6 +63,13 @@ hr + p { color: var(--muted); font-size: 14px; }
 code { font: 0.9em var(--mono); background: var(--soft); padding: 0.1em 0.35em; border-radius: 3px; }
 pre { background: var(--soft); border: 1px solid var(--line); border-radius: 4px; padding: 12px 14px; overflow-x: auto; line-height: 1.45; }
 pre code { background: none; padding: 0; font-size: 13.5px; }
+/* Chroma classes (markup.highlight.noClasses = false), coloured from the theme's tokens */
+.chroma :is(.nt, .na, .nv, .nl) { color: var(--code-key); }
+.chroma :is(.s, .s1, .s2, .sa, .sb, .sc, .sd, .se, .sh, .si, .sr, .ss, .sx, .dl) { color: var(--code-string); }
+.chroma :is(.c, .c1, .cm, .ch, .cs, .cp, .cpf) { color: var(--code-comment); font-style: italic; }
+.chroma :is(.m, .mb, .mf, .mh, .mi, .mo, .il, .kc, .l, .ld) { color: var(--code-number); }
+.chroma :is(.k, .kd, .kn, .kp, .kr, .kt, .ow) { color: var(--code-keyword); }
+.chroma :is(.nb, .bp, .nf, .fm) { color: var(--code-builtin); }
 
 table { border-collapse: collapse; width: 100%; margin: 0 0 1.2rem; font-size: 14.5px; display: block; overflow-x: auto; }
 th, td { border-bottom: 1px solid var(--line); padding: 6px 12px 6px 0; text-align: left; vertical-align: top; }
