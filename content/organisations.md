@@ -18,7 +18,7 @@ kind: Catalog
 metadata:
   name: acme-baseline
   version: 1.0.0
-  engine: 3
+  engine: 4
   layer: org                        # org or team; decides where it resolves in the run
   catalog: { version: v0.1.0 }      # the fleetlint catalog this builds on; every repository runs that version
   includes: ["fleetlint:minimal"]

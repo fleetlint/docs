@@ -22,7 +22,7 @@ kind: Catalog
 metadata:
   name: my-standards
   version: 1.2.0
-  engine: 3                           # the engine level the catalog is written for
+  engine: 4                           # the engine level the catalog is written for
   layer: org                          # org or team; where it resolves in a run (omit for a repository's local catalog)
   catalog: { version: v0.1.0 }        # the fleetlint catalog the includes and `use:` selections come from; required for a remote catalog
   includes: [fleetlint:recommended]   # optional; loaded first
@@ -217,11 +217,11 @@ Rules are data. The one exception in the presets is `quality/check-passes`, whic
 A catalog states the engine level it was written for:
 
 ```yaml
-metadata: {name: acme-baseline, version: 1.0.0, engine: 3}
+metadata: {name: acme-baseline, version: 1.0.0, engine: 4}
 ```
 
 The level counts the changes to what rules can rely on (facts, functions, fix actions) that an older catalog or an older fleetlint would not survive. A binary runs a range of levels. A catalog outside that range is refused when it is loaded, with one message that says whether to upgrade fleetlint or choose another catalog version, instead of its rules failing one by one. A catalog that states no level is loaded as it is. The level is read before the rest of the document, so a catalog that uses a key this fleetlint does not know (level 2 introduced `use:`) is refused with that message, not with a parse error.
 
-Levels so far: 1, the first catalog format; 2, `use:` entries that select from the library; 3, capabilities with per-stack implementations, stacks as catalog data, and CI accessors that read GitLab CI and Forgejo Actions.
+Levels so far: 1, the first catalog format; 2, `use:` entries that select from the library; 3, capabilities with per-stack implementations, stacks as catalog data, and CI accessors that read GitLab CI and Forgejo Actions; 4, `combine:` on capabilities (fleetlint 0.5.0).
 
 The presets carry no `metadata.version`: they take the version of the catalog release they ship in (its tag, or the commit for an untagged build), so a report names `fleetlint-recommended@v0.1.0`. Every other catalog states its version.
