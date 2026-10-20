@@ -6,11 +6,11 @@ description: "Your own catalog on top of the presets: overrides, locks and floor
 
 # Organisations
 
-A company has more than one layer of policy: what security or platform require of every repository, what a team adds, and what a repository decides for itself. fleetlint models that with catalogs.
+A company has more than one level of policy: what security or platform require of every repository, what a business unit or a team adds, and what a repository decides for itself. fleetlint models that with catalogs that build on each other, applied in the order they are listed, and labelled by whoever owns them.
 
 ## Your own catalog
 
-A catalog is a YAML file in the same format as the presets. It says who owns it (`layer`) and which catalog version it builds on (`catalog`), builds on the presets with `includes`, adds rules of its own, selects single built-in rules with `use:`, adjusts the included ones with `overrides:`, and may grant `exceptions:` to every repository that extends it:
+A catalog is a YAML file in the same format as the presets. It says who owns it (`label`) and which catalog version it builds on (`catalog`), builds on the presets and on other catalogs with `includes`, adds rules of its own, selects single built-in rules with `use:`, adjusts the included ones with `overrides:`, and may grant `exceptions:` to every repository that extends it:
 
 ```yaml
 apiVersion: fleetlint.org/v1
@@ -19,7 +19,7 @@ metadata:
   name: acme-baseline
   version: 1.0.0
   engine: 4
-  layer: org                        # org or team; decides where it resolves in the run
+  label: org                        # who owns it: any name (org, team/mobile, security-team); reports attribute by it
   catalog: { version: v0.1.0 }      # the fleetlint catalog this builds on; every repository runs that version
   includes: ["fleetlint:minimal"]
 rules:
@@ -39,7 +39,8 @@ exceptions:
   - { rule: repo/no-tracked-junk, match: "fixtures/*.log", reason: "parser fixtures across the fleet" }
 ```
 
-- `layer` is `org` or `team`. The run resolves presets first, then every org catalog, then every team catalog, then the repository, whatever order `extends` lists them in. A catalog that says nothing is treated as the repository's own.
+- `label` is a free name: `org`, `team/mobile`, `security-team`, whatever identifies the owner. Reports attribute the catalog's rules, locks, lowered severities and exceptions to it, and `--require <label>` names it. It does not order anything. A catalog that says nothing is labelled by the sources-file name it is loaded under, else by its own name.
+- Catalogs apply in the order they are listed: the sources file's `extends` first, then the repository's, and an include always before the catalog that includes it. Policy only tightens, so a catalog binds every catalog after it. A team catalog that must come after the organisation's includes it; an organisation that must come first everywhere puts its catalogs in the sources file's `extends`. [How rules combine](composition.md) is the full account; `fleetlint hierarchy` prints the order of a run.
 - `catalog` names the fleetlint catalog version the presets it includes and the library it selects from come from. A remote catalog that includes presets or uses the library must state it, and the run fails if the repository runs another version: the catalog means the same rules everywhere or it fails loudly. The sources file sets that version for every repository (below).
 - `exceptions` are the same as a repository's, granted fleet-wide and attributed to the catalog in every report; a catalog loaded before may forbid them for a rule (`exceptions: false`).
 
@@ -120,7 +121,7 @@ Violations are configuration errors at load time (exit 2), not weaker checks at 
 
 Locks only hold for catalogs that are actually loaded. A repository could drop the baseline from `extends`, so enforcement belongs where the check runs: the organization's CI template and fleet runner pass `--require acme-baseline` (a catalog name, a ref, or `ref#sha256-<digest>` to pin the exact version). A repository whose effective configuration lacks that catalog fails with exit 2 before any rule runs, and in fleet mode becomes an error row. The flag is persistent, so `fix`, `explain` and `baseline` refuse under a weaker configuration too.
 
-## Layers: organization, teams, repository
+## Names: the sources file
 
 Repositories should not carry URLs and pins for every catalog. An organization publishes one **sources file** that names its catalogs:
 
@@ -128,9 +129,11 @@ Repositories should not carry URLs and pins for every catalog. An organization p
 # sources.yaml
 version: 1
 catalog: { version: v0.1.0 }         # the fleetlint catalog version every repository runs with (or {oci: ghcr.io/fleetlint/catalog:v0.1.0})
-extends: [fleetlint:recommended, org] # the baseline every repository gets, before its own extends
+extends: [fleetlint:recommended, org, compliance/pci] # the baseline every repository gets, in this order, before its own extends
 catalogs:
   org: git+https://git.example.com/platform/standards.git//org/catalog.yaml@v3.2.0#sha256-<hex>
+  compliance/pci: oci://ghcr.io/acme/compliance-catalog:2
+  bu/payments: git+https://git.example.com/payments/standards.git//catalog.yaml@v1.4.0#sha256-<hex>
   team/platform: git+https://git.example.com/platform/standards.git//teams/platform/catalog.yaml@v3.2.0#sha256-<hex>
   team/mobile: https://standards.example.com/teams/mobile.yaml#sha256-<hex>
 ```
@@ -143,13 +146,13 @@ sources: git+https://git.example.com/platform/standards.git//sources.yaml@<commi
 extends: [team/platform]
 ```
 
-- Names are `org` or `team/<name>`; nothing else is accepted. Targets are presets, https catalogs with a digest or git catalogs. A sources file given as a local path may also name local paths, resolved relative to itself; a remote one may not. A catalog loaded under an alias must declare the same layer, or none.
+- Names are lowercase words joined by `/` (`org`, `team/mobile`, `compliance/pci`, `bu/payments`): any hierarchy the organisation has. Targets are presets, https catalogs with a digest, git or `oci://` catalogs. A sources file given as a local path may also name local paths, resolved relative to itself; a remote one may not. A catalog loaded under a name takes that name as its label unless it declares one.
 - `catalog` is the one version of the fleetlint catalog for every repository; a repository may repeat it, not change it. `extends` is the baseline: the repository's own `extends` adds to it and cannot leave anything out. Together they answer "is the baseline present and complete" without a `--require` flag; `--require` stays for the runner that wants to insist.
 - The sources file itself is a local path, an https URL with a digest or a git reference, pinned the same way as a catalog. Rotating a catalog version is then one change to the sources file and one pin update per repository.
-- Resolution order is by layer, always: presets, then `org`, then `team/*`, then the repository (its directly referenced catalogs and its own file). Within a layer, written order.
-- Every rule carries the layer that brought it in (`preset`, `org`, `team`, `repo`), the catalog that defined its text (`source`, the library for selected rules) and the catalog that selected it (`selected_by`): `explain` prints them, JSON has them on the rule, SARIF in the rule properties, and the JSON `catalogs` list has each catalog's layer and name.
-- Locks and severity floors hold across catalogs: a team catalog cannot redefine a locked organization rule or set a severity below the organization's `min_severity`, and the floor still binds the repository after a team redefines the rule. Every lowering, by whichever layer, is recorded: it appears under `weakened` in JSON and under "Lowered severities" in the fleet report with its layer.
-- `--require org` and `--require team/platform` match the names from the sources file, and count only catalogs fetched by digest, commit or signature: a local file of the same name does not satisfy them.
+- The order is what is written: the sources file's `extends`, then the repository's `extends`, then its own file, with every include before the catalog that includes it. A team catalog that includes `org` can never come before it. Nothing is sorted by name or label.
+- Every rule carries the label of the catalog that brought it in (`preset`, `repo`, `org`, `team/mobile`, ...), the catalog that defined its text (`source`, the library for selected rules) and the catalog that selected it (`selected_by`): `explain` prints them, JSON has them on the rule, SARIF in the rule properties. The JSON `catalogs` list, `fleetlint hierarchy` and the fleet report's Catalogs section have every catalog of the run in order with its label, name, version and pin.
+- Locks and severity floors hold across catalogs: a later catalog cannot redefine a locked rule or set a severity below an earlier `min_severity`, and the floor still binds the repository after a team redefines the rule. Every lowering, by whichever catalog, is recorded: it appears under `weakened` in JSON and under "Lowered severities" in the fleet report with the label.
+- `--require org` and `--require compliance/pci` match the names from the sources file or a catalog's label or name, and count only catalogs fetched by digest, commit or signature: a local file of the same name does not satisfy them.
 
 ## Catalogs from a registry: `oci://`, signatures, private templates
 

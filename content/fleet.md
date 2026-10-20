@@ -22,11 +22,14 @@ fleetlint fleet --discover ~/src --fix              # what fix --apply would cha
 ```yaml
 version: 1
 cache: ~/.cache/fleetlint/repos      # where url entries are cloned (shallow)
+include:                             # other fleet files, relative to this one: a team's fleet inside the organisation's
+  - teams/platform/fleet.yaml
 defaults:                            # for every repository, discovered ones too
   tier: 2
-groups:                              # for the repositories of a group
+groups:                              # for the repositories of a group; groups nest by path
   experiments: {tier: 3, visibility: private}
   apps: {team: mobile}
+  apps/ios: {tier: 1}
 repos:
   - path: ../api                       # relative to this file
     team: platform
@@ -36,7 +39,7 @@ repos:
     group: apps                        # optional; reports summarize per group
 ```
 
-An entry may also carry `tier:` (1, 2 or 3) and `visibility:` (`public` or `private`). `defaults:` and `groups:` set `team`, `tier` and `visibility` for many repositories at once, including the ones `--discover` and `--from` add: an entry's own value wins over its group's, and the group's over the defaults. What a repository pins in its own `.fleetlint.yaml` wins over all of them, so the fleet file fills gaps and does not overrule a repository. An entry whose `path` is a repository `--discover` also finds adjusts that repository (and takes its group) instead of adding it twice. A tier from the fleet file shows as `fleet file` wherever the tier source is named, and those repositories leave *Facts to pin*.
+An entry may also carry `tier:` (1, 2 or 3) and `visibility:` (`public` or `private`). `defaults:` and `groups:` set `team`, `tier` and `visibility` for many repositories at once, including the ones `--discover` and `--from` add: an entry's own value wins over its group's, a group's over its parent group's (`apps/ios` over `apps`), and the parents' over the defaults. `include:` takes the repositories of other fleet files: each is settled with its own file's defaults and groups first, and this file's defaults fill what that left open; the included file's groups are known here unless this file defines them, and a repository name may appear once across all files. What a repository pins in its own `.fleetlint.yaml` wins over all of them, so the fleet file fills gaps and does not overrule a repository. An entry whose `path` is a repository `--discover` also finds adjusts that repository (and takes its group) instead of adding it twice. A tier from the fleet file shows as `fleet file` wherever the tier source is named, and those repositories leave *Facts to pin*.
 
 When neither the fleet file nor the repository says whether it is public, fleet mode asks the forge of the repository's remote, the way `init` does: `GITHUB_TOKEN` (or `GH_TOKEN`) for GitHub, `GITEA_TOKEN` for Gitea. Gitea hosts are asked only when named in `GITEA_HOST` (comma-separated) or as a `--from` source; any other host is not contacted, and its repositories' visibility stays unknown with a note how to name it. A forge that does not show a repository without a token leaves its visibility unknown, with one note per forge at the end of the run. With the GitHub CLI logged in, `GITHUB_TOKEN=$(gh auth token) fleetlint fleet ...` is enough.
 
@@ -49,7 +52,7 @@ fleetlint fleet --discover ~/src
 fleetlint fleet --discover ~/src --exclude 'vendor-clones/**' --exclude '*/third_party/*'
 ```
 
-`--discover` walks the directory up to four levels down and takes every git repository it finds; it does not descend into a repository, so submodules and nested clones stay out. A repository is named after its directory, or after its path when two directories share a name (`suite-docs`, `other-docs`), and its group is the top-level directory it sits under (`~/src/cairn/cairn-core` is in group `cairn`). The directory itself counts as a repository only when there is none below it. Directories that look like a project (a manifest such as `go.mod` or `package.json`, or source files) but are in no repository of their own are listed under *Not under version control*: fleetlint cannot check them. `--exclude` takes globs relative to the directory.
+`--discover` walks the directory up to four levels down and takes every git repository it finds; it does not descend into a repository, so submodules and nested clones stay out. A repository is named after its directory, or after its path when two directories share a name (`suite-docs`, `other-docs`), and its group is the directories it sits under, joined by `/` (`~/src/cairn/cairn-core` is in group `cairn`, `~/src/incyde/tooling/vuln-ui` in `incyde/tooling`, which rolls up into `incyde`). The directory itself counts as a repository only when there is none below it. Directories that look like a project (a manifest such as `go.mod` or `package.json`, or source files) but are in no repository of their own are listed under *Not under version control*: fleetlint cannot check them. `--exclude` takes globs relative to the directory.
 
 ## Discovering repositories on a forge
 
@@ -82,6 +85,8 @@ fleetlint fleet --discover ~/src --fix --apply                               # e
 | `actions/<repo>.md` | the ordered task list for that repository, ready to hand to a coding agent; it starts with `fleetlint fix --apply` when part of the work is mechanical |
 | `history/<timestamp>.json` | a copy of `fleet.json` per run; the next run into the same directory compares with the latest one, also across format versions. Keep the directory in git or a bucket to see drift over time |
 
+`fleet.json` carries `version: 4`: each repository lists its `catalogs` in the order they applied, with label, name, version and the digest or artifact that pins each.
+
 Compliance is the share of applicable rules that pass or are excepted. A rule that could not be evaluated (a file fleetlint cannot parse, say) is left out of it and reported as a rule error instead. A repository that could not be checked (missing path, clone failure, invalid config) is listed with its error and never counted as compliant.
 
 ## Sections
@@ -98,10 +103,11 @@ Compliance is the share of applicable rules that pass or are excepted. A rule th
 | Facts to pin | repositories whose tier was inferred or defaulted, or whose visibility is unknown, with the `facts:` line to add. Both decide which rules apply and how severe they are |
 | Not under version control | project directories `--discover` found outside any repository |
 | Policy notes | disabled rules, lowered severities, exceptions |
+| Catalogs | every catalog a repository applied, with its label, origin, pin and the repositories using it; the same list `fleetlint hierarchy` prints in one repository |
 
 ## Teams and groups
 
-When entries carry `team:` (or `group:`, or come from `--discover`), the report adds a table per team (per group): repositories, how many could not be checked, mean compliance of the checked ones, and the totals of errors, warnings, excepted findings, disabled rules, lowered severities and exceptions that have expired or will within 30 days. Repositories without a team are grouped as `(none)`. Together with the layer column in the policy notes this answers which team weakened what.
+When entries carry `team:` (or `group:`, or come from `--discover`), the report adds a table per team (per group): repositories, how many could not be checked, mean compliance of the checked ones, and the totals of errors, warnings, excepted findings, disabled rules, lowered severities and exceptions that have expired or will within 30 days. A nested group counts for every level above it (`incyde/tooling` and `incyde`). Repositories without a team are grouped as `(none)`. Together with the label column in the policy notes this answers which team weakened what.
 
 ## Policy notes
 

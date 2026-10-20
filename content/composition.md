@@ -6,7 +6,7 @@ description: "The one pass that turns presets, catalogs, selections, overrides a
 
 # How rules combine
 
-A repository's effective rule set comes from several places: the presets, an organisation catalog, a team catalog, the repository's own `.fleetlint.yaml`. This page is the complete account of how they are put together, and of the three guarantees the design makes: the result is **reproducible** (the same on every machine and every run), **attributed** (every rule and every change says who made it) and **tightening-only** (a lower layer can adjust, never undo policy). Every statement here is held by a test in fleetlint (`internal/config/hierarchy_test.go`, `composition_test.go`, `policy_test.go`, `overrides_test.go`).
+A repository's effective rule set comes from several places: the presets, an organisation catalog, a team catalog, the repository's own `.fleetlint.yaml`. This page is the complete account of how they are put together, and of the three guarantees the design makes: the result is **reproducible** (the same on every machine and every run), **attributed** (every rule and every change says who made it) and **tightening-only** (a later catalog can adjust, never undo policy). Every statement here is held by a test in fleetlint (`internal/config/hierarchy_test.go`, `composition_test.go`, `policy_test.go`, `overrides_test.go`).
 
 ## Vocabulary
 
@@ -16,12 +16,13 @@ A repository's effective rule set comes from several places: the presets, an org
 | **capability** | A rule that states one requirement and is checked by an implementation per stack (`lint/configured`, implemented by `lint/configured/go`, `lint/configured/python`, ...). See [capabilities](writing-rules.md#capabilities-one-requirement-one-implementation-per-stack). |
 | **library** | The catalog repository's `rules/<family>/<name>.yaml` files, one rule per file, the path spelling the id; a capability's implementations at `rules/<family>/<name>/<stack>.yaml`. Every catalog version ships one; a catalog may ship its own `rules/` next to it. |
 | **catalog version** | One release of [fleetlint/catalog](https://github.com/fleetlint/catalog): presets, library and fix templates together. The binary embeds one; `catalog: {version: …}` chooses another. **A run uses exactly one.** |
-| **catalog** | A YAML document with `metadata` (name, version, engine, `layer`, `catalog`), `includes`, a `rules` list, `overrides` and `exceptions`. Presets, organisation and team catalogs, and the repository's own file are all catalogs. |
+| **catalog** | A YAML document with `metadata` (name, version, engine, `label`, `catalog`), `includes`, a `rules` list, `overrides` and `exceptions`. Presets, organisation and team catalogs, and the repository's own file are all catalogs. |
 | **preset** | A catalog that is part of the catalog version (`fleetlint:minimal`, `recommended`, `strict`, `oss`, `slop`). Presets define no rules: they *select* from the library or *override* another preset. |
 | **select** (`- use: …`) | An entry in a catalog's `rules` list that takes a rule, or a family of rules, from the library as it is. |
 | **define** (inline) | An entry in a catalog's `rules` list with an `id` and the rule's full text. |
 | **override** | An entry in a catalog's `overrides` map that adjusts a rule the catalog took in from elsewhere. |
-| **layer** | Who owns a catalog: `preset`, `org`, `team`, `repo`. A catalog fetched by digest, commit or signature declares `org` or `team` in `metadata.layer`; presets are `preset`; everything else is `repo`, including any catalog file in the repository, whatever its `metadata.layer` says. |
+| **label** | The name a catalog is attributed by in reports and named by for `--require`: what it declares in `metadata.label` (`org`, `team/mobile`, `security-team`, anything), else the sources-file name it is loaded under, else its own name. Presets are `preset`, the repository's own file is `repo`. A label identifies; it does not order. |
+| **order** | The position of a catalog in the run, from 1. A later catalog adjusts an earlier one within the earlier one's policy. `fleetlint hierarchy` prints it. |
 | **policy** | The three constraints a catalog can put on a rule for everything after it: `locked`, `min_severity`, `exceptions: false`. |
 
 ## What makes a run reproducible
@@ -30,7 +31,7 @@ Three facts fix the result, and nothing else influences it:
 
 1. **The catalog version.** Set in `.fleetlint.yaml` (`catalog:`), in the organisation's sources file, or neither (the built-in one). Both may speak if they agree; they may not disagree. Every organisation or team catalog states the version it builds on in `metadata.catalog`; a run on another version fails with both versions named, instead of resolving `use: lint/*` to whatever the reader's binary happens to ship. A remote catalog that includes presets or selects from the library *must* state it.
 2. **The catalogs, by content.** Presets by version; remote catalogs by digest, commit or signature; the sources file pinned the same way.
-3. **The layer order**, which is fixed, not written. `extends` can be in any order and the result is the same.
+3. **The order**, which is the include graph, then the sources file's baseline, then the repository's `extends` as written. Nothing is reordered: whoever lists a catalog first binds the ones after it.
 
 So two machines with the same `.fleetlint.yaml`, the same sources file and any fleetlint binary that can run the catalog version produce the same effective rule set, or the same error.
 
@@ -39,20 +40,26 @@ So two machines with the same `.fleetlint.yaml`, the same sources file and any f
 The effective rule set is computed once, at load time:
 
 1. **Collect what to extend**: the sources file's `extends` (the baseline every repository gets), then the repository's `extends`, each alias resolved; a repository that names nothing gets `fleetlint:recommended`.
-2. **Load each entry with its `includes`** (depth-first, listed order). A catalog is loaded once however many paths lead to it; a cycle is an error. Each catalog gets its layer: `preset` for presets, the declared `org` or `team` (which must agree with the sources-file alias it is loaded under), `repo` otherwise. Each is checked against the run's catalog version.
-3. **Order by layer**: preset → org → team → repo. Within a layer, the order of step 1.
+2. **Load each entry with its `includes`** (depth-first, listed order). A catalog is loaded once however many paths lead to it; a cycle is an error, and so are two versions of one catalog name (the sources file pins v3.2, a team catalog includes v3.1). Each catalog gets its label: `preset` for presets, what it declares, else its sources-file name, else its name. Each is checked against the run's catalog version.
+3. **Keep that order.** An include always comes before the catalog that includes it, so a team catalog that includes the organisation's can never apply before it, whatever the repository writes.
 4. **Apply each catalog**: its `rules` list in list order — inline definitions and `use:` selections, the latter expanded from the catalog's own `rules/` first and the run's library second — then its `overrides` (patterns before exact ids), then its `exceptions`.
-5. **The repository last**, as a catalog of layer `repo` with the same grammar: `rules` (definitions and selections), `overrides`, `exceptions`. Then scopes and nested files, which may only override and except.
+5. **The repository's own file last**, labelled `repo`, with the same grammar: `rules` (definitions and selections), `overrides`, `exceptions`. Then scopes and nested files, which may only override and except.
+
+`fleetlint hierarchy` prints the result, and every report carries it under `catalogs`:
 
 ```text
 sources.yaml:   catalog: {version: v0.1.0}   extends: [fleetlint:recommended, org]
 .fleetlint.yaml: extends: [team/platform]
 
-fleetlint:recommended   layer preset   includes minimal (8) + use: repo/*, ci/*, lint/*, … (71)
-org                     layer org      catalog v0.1.0 ✓   use: slop/*  +  acme/owner-file  +  overrides "release/*": {locked: true}
-team/platform           layer team     catalog v0.1.0 ✓   lint/shell redefined inline (weakened: recorded)
-.fleetlint.yaml         layer repo     overrides quality/coverage-threshold: {params: {min: 90}}   exceptions: …
+#  catalog                                  label     name                      pinned by        builds on  contributes
+1  fleetlint:minimal                        preset    fleetlint-minimal@v0.1.0  sha256-…         -          8 rules
+2  fleetlint:recommended                    preset    fleetlint-recommended@…   sha256-…         #1         71 rules
+3  org = git+https://…/org.yaml@v3.2.0      org       acme@3.2.0                sha256-…         #2         3 rules, 2 overrides
+4  team/platform = git+https://…@v3.2.0     platform  acme-platform@3.2.0       sha256-…         #3         1 rule
+5  .fleetlint.yaml                          repo      .fleetlint.yaml@local     file in the repository  -   1 override, 2 exceptions
 ```
+
+A catalog file of the repository listed in `extends` takes its place in the written order like any other; it is labelled by what it declares, else its name. It cannot satisfy `--require` by name, and the sources file's baseline always comes before it.
 
 ## When an id is met again
 
@@ -62,9 +69,9 @@ A rule's identity is its id. These are all the things that can happen when an id
 |---|---|
 | Two inline definitions in one catalog | error |
 | An inline definition and a `use:` of the same id, in one catalog | the inline definition; this is how one rule of `lint/*` is replaced while the rest is kept |
-| A `use:` of a rule that is already loaded (from an include or an earlier catalog) | kept exactly as first loaded — same layer, same selector, same overrides; nothing is redefined or recorded |
+| A `use:` of a rule that is already loaded (from an include or an earlier catalog) | kept exactly as first loaded — same label, same selector, same overrides; nothing is redefined or recorded |
 | Two catalogs select the same library rule | loaded once, from the first |
-| An inline definition, in a catalog, of an id already loaded | **replaces** the rule wholesale: title, kind, expression, severity, params, all from the new text. Refused if the earlier definition is locked; refused if the new severity is below the earlier floor, which is otherwise inherited. A lower severity is recorded as *weakened*, by whichever layer, and appears in every report |
+| An inline definition, in a catalog, of an id already loaded | **replaces** the rule wholesale: title, kind, expression, severity, params, all from the new text. Refused if the earlier definition is locked; refused if the new severity is below the earlier floor, which is otherwise inherited. A lower severity is recorded as *weakened*, under the label of the catalog that did it, and appears in every report |
 | An inline definition, in the repository's file, of an id a catalog defines | error: the repository adjusts under `overrides`; it does not redefine, so policy stays readable from the catalogs alone |
 | An `overrides` key for a rule the same catalog defines inline | an exact key is an error (change the definition); a pattern skips the catalog's own definitions |
 
@@ -125,10 +132,11 @@ Violations are configuration errors at load time (exit 2), naming the catalog th
 
 Every rule in a report carries three things, and every change one:
 
-- `layer` — who brought the rule in: `preset`, `org`, `team`, `repo`.
+- `label` — who brought the rule in: `preset`, `repo`, or the label of the catalog (`org`, `team/mobile`, `security-team`).
 - `source` — where its text lives: the defining catalog (`acme-baseline@1.0.0`), or `library <version>` for a selected rule.
 - `selected_by` — for a selected rule, the catalog whose `use:` took it in.
-- Every disable, lowered severity and exception carries the layer and the file or catalog that did it, and its reason. A fleet report can therefore answer "which team lowered what, and why" from the data alone.
+- Every disable, lowered severity and exception carries the label and the file or catalog that did it, and its reason. A fleet report can therefore answer "which team lowered what, and why" from the data alone.
+- `catalogs` in the JSON (and `fleetlint hierarchy`) lists every catalog of the run in order, with its reference, label, name and version, the sha256 of its file or the digest of its OCI artifact, what it builds on and what it contributed, so a definition can be followed to the exact content afterwards.
 
 ## The repository's part
 
@@ -143,10 +151,10 @@ It may not redefine a catalog rule. Scopes and nested files have `overrides` and
 
 ## Checklist for catalog authors
 
-- Declare `engine`, `layer` and `catalog` in `metadata`. Without `catalog`, a remote catalog cannot build on presets or the library, by design.
+- Declare `engine`, `label` and `catalog` in `metadata`. Without `catalog`, a remote catalog cannot build on presets or the library, by design. A catalog that must come after another includes it.
 - Select with `use:`; define inline only what is yours. A family glob (`lint/*`) follows the library as it grows — within the pinned catalog version, so growth is a visible version change, never a surprise.
 - Adjust with `overrides`; overwrite only when the check itself must differ.
 - New checks get ids in your own family. Never reuse a built-in id for a different check.
 - Write what must hold as policy (`locked`, `min_severity`, `exceptions: false`), not as a severity override.
 - Put the catalog version and the baseline `extends` in the sources file, so repositories carry one line (`sources:`) and cannot run another version or leave the baseline out.
-- Read the report's policy notes: every disable, lowered severity and exception is listed with its layer and reason. If something you meant to hold does not appear as refused when a team tries to bend it, it was not policy.
+- Read the report's policy notes: every disable, lowered severity and exception is listed with its label and reason. If something you meant to hold does not appear as refused when a team tries to bend it, it was not policy.

@@ -58,7 +58,7 @@ The templates `fleetlint fix` writes already do all three: a local hook, this li
 
 ## Machine-readable output
 
-`fleetlint check --format json` writes the whole run: `results` (each rule with its `status`, findings and evidence), `summary`, `facts`, `scopes`, the `catalogs` loaded with their layers, and what was `disabled` or `weakened`. Field names are snake_case and the document carries `version: 2`; a change of shape gets a new version. `summary.errors` counts error-severity failures, `summary.rule_errors` the rules that could not run. A rule's satisfiers from `accept:` are in `results[].rule.accept`. `--format sarif` writes SARIF for code-scanning tools.
+`fleetlint check --format json` writes the whole run: `results` (each rule with its `status`, findings and evidence), `summary`, `facts` (with the published `artifacts`), `scopes`, the `catalogs` in the order they applied (reference, label, name, version, digest or artifact, what each builds on and contributed), and what was `disabled` or `weakened`. Field names are snake_case and the document carries `version: 3`; a change of shape gets a new version. `fleetlint hierarchy --format json` writes the `catalogs` list on its own. `summary.errors` counts error-severity failures, `summary.rule_errors` the rules that could not run. A rule's satisfiers from `accept:` are in `results[].rule.accept`. `--format sarif` writes SARIF for code-scanning tools.
 
 ## Pull-request comments
 

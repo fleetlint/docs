@@ -45,11 +45,11 @@ exceptions:
     until: 2027-03-31
 ```
 
-The file has the same grammar as a catalog: `rules` defines or selects, `overrides` adjusts, `exceptions` excepts. The repository is the last catalog of the run, at the repository layer; what that allows and forbids is one page: [how rules combine](composition.md).
+The file has the same grammar as a catalog: `rules` defines or selects, `overrides` adjusts, `exceptions` excepts. The repository is the last catalog of the run; what that allows and forbids is one page: [how rules combine](composition.md). `fleetlint hierarchy` prints the catalogs of a run in the order they apply.
 
 ## extends
 
-The catalogs to apply, in order; a later one overrides an earlier one rule by rule. Without the key, `fleetlint:recommended` is used.
+The catalogs to apply, in order: a later one adjusts an earlier one within the earlier one's policy (locks, floors, forbidden exceptions only tighten). A catalog's includes apply before it. The sources file's `extends` comes before this list. Without the key, `fleetlint:recommended` is used.
 
 | Reference | Meaning |
 |---|---|
@@ -101,6 +101,7 @@ fleetlint detects these on every run; `fleetlint facts` prints them with where e
 | `visibility` | `public`, `private` | not detected by `check`; `init` asks the forge once and writes it |
 | `forge` | `github`, `gitea`, `gitlab` | the `origin` remote |
 | `container` | `none`, `devcontainer`, `docker`, `podman` | `devcontainer` when a devcontainer.json exists, else `none` |
+| `artifacts` | artifact kinds the catalog defines: `release-files`, `image`, `helm-chart`, `npm`, `pypi`, `crate`, `gem`, `maven`, `nuget`, `pub`, `android-app`, `apple-app` | the workflows that publish each (`gh release create`, a build-push action with `push: true`, `npm publish`, ...), by the catalog's `artifacts/<kind>.yaml`; `fleetlint facts` names the workflows. Pin it when a publish step hides in a reusable workflow; `artifacts: []` says nothing is published. The release capabilities are checked once per kind |
 
 `facts:` holds what applies to the whole repository. Stacks and the task runner are set per directory, under [`scopes`](#scopes).
 
@@ -169,7 +170,7 @@ rules:
     fix: { human: "write docs/ARCHITECTURE.md" }
 ```
 
-An id is `family/name` in lowercase letters, digits and dashes. A rule a catalog already defines cannot be redefined here; adjust it under `overrides`. The repository's own rules may not set `locked`, `min_severity` or `exceptions`: no layer comes after the repository for them to bind. Rules defined in the repository may be `command` rules, which catalogs may not carry.
+An id is `family/name` in lowercase letters, digits and dashes. A rule a catalog already defines cannot be redefined here; adjust it under `overrides`. The repository's own rules may not set `locked`, `min_severity` or `exceptions`: no catalog comes after the repository for them to bind. Rules defined in the repository may be `command` rules, which catalogs may not carry.
 
 ## exceptions
 

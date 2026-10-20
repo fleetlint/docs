@@ -42,6 +42,7 @@ Exit codes: 0 clean, 1 findings at or above `--fail-on` (default `error`), 2 con
 ```sh
 fleetlint facts                       # what was discovered, and where each value came from
 fleetlint explain taskrunner/targets  # one rule in full: requirement, rationale, fix
+fleetlint hierarchy                   # the catalogs of the run in the order they apply, with their pins
 ```
 
 ## Write the configuration
