@@ -185,9 +185,11 @@ An exception accepts individual findings of a rule that keeps running:
 
 ## Baseline
 
-`fleetlint baseline` writes `.fleetlint-baseline.json` with a fingerprint (rule, scope, path, message) of every current finding. From then on those findings report as *baselined* instead of failing, so `fleetlint check` is green today and fails only on findings that are new.
+`fleetlint baseline` writes `.fleetlint-baseline.json` with a fingerprint (rule, scope, path, message, and the artifact's name for a finding about a named artifact) of every current finding. Where a report points (a rule's `locate`) is not part of it. From then on those findings report as *baselined* instead of failing, so `fleetlint check` is green today and fails only on findings that are new.
 
 The file can only shrink. Re-running `fleetlint baseline` drops entries that no longer match and refuses to add new ones; the report says how many entries are "paid off" after each run. `--reset` starts over and grandfathers everything, which is a deliberate act you should see in a diff. Commit the file; a pull request that grows it is a pull request that weakens the policy.
+
+Since 0.8 a release finding about a named artifact (an image, a chart, an OCI artifact) carries the name and so has a fingerprint of its own: a baseline written by 0.7 no longer covers it, and `--reset` grandfathers the findings again if that is what you want. Every other fingerprint is unchanged.
 
 Baselined findings do not count towards compliance in fleet mode: they are acknowledged debt, listed separately, not success.
 
