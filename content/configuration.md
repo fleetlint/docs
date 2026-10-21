@@ -101,7 +101,7 @@ fleetlint detects these on every run; `fleetlint facts` prints them with where e
 | `visibility` | `public`, `private` | not detected by `check`; `init` asks the forge once and writes it |
 | `forge` | `github`, `gitea`, `gitlab` | the `origin` remote |
 | `container` | `none`, `devcontainer`, `docker`, `podman` | `devcontainer` when a devcontainer.json exists, else `none` |
-| `artifacts` | artifact kinds the catalog defines: `release-files`, `image`, `helm-chart`, `npm`, `pypi`, `crate`, `gem`, `maven`, `nuget`, `pub`, `android-app`, `apple-app` | the workflows that publish each (`gh release create`, a build-push action with `push: true`, `npm publish`, ...), by the catalog's `artifacts/<kind>.yaml`; `fleetlint facts` names the workflows. Pin it when a publish step hides in a reusable workflow; `artifacts: []` says nothing is published. The release capabilities are checked once per kind |
+| `artifacts` | artifact kinds the catalog defines: `release-files`, `image`, `oci-artifact`, `helm-chart`, `npm`, `pypi`, `crate`, `gem`, `maven`, `nuget`, `pub`, `android-app`, `apple-app` | the workflows that publish each (`gh release create`, a build-push action with `push: true`, `npm publish`, ...), by the catalog's `artifacts/<kind>.yaml`; `fleetlint facts` names the workflows. Pin it when a publish step hides in a reusable workflow; `artifacts: []` says nothing is published. The release capabilities are checked once per kind |
 
 `facts:` holds what applies to the whole repository. Stacks and the task runner are set per directory, under [`scopes`](#scopes).
 
