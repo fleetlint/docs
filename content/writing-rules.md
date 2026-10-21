@@ -51,7 +51,9 @@ rules:
         - append: {file: pyproject.toml, template: python/ruff.toml, unless: '(?m)^\[tool\.ruff\]'}   # add a block to an existing TOML or YAML file
         - merge: {file: tsconfig.json, template: node/tsconfig-strict.json}   # add the keys an existing JSON file lacks
     params: { key: value }     # available to the expression as params.key
-    refs: ["docs/baseline.md#documentation"]
+    refs:                      # where the practice comes from, strongest source first
+      - {url: "https://slsa.dev/spec/v1.0/requirements", kind: standard, section: "Build L2"}
+      - "https://fleetlint.org/baseline/#releases"
 ```
 
 `set` adds one string to a file that exists and never changes a key that is already there. JSON takes a top-level key, TOML takes `table.key` in a table written with a `[table]` header. The edit is kept only if the file afterwards parses to exactly the old content plus the key; files it cannot edit that way (JSON with comments, inline tables) are left to a person. `{license}` is the SPDX identifier of the repository's LICENSE file when its text is one recognised license; without it the action does nothing. GNU licenses yield no identifier, because the text does not say whether `-only` or `-or-later` applies.
@@ -61,6 +63,10 @@ rules:
 `{taskrunner}` is the runner file for the repository's task runner (`Makefile`, `justfile` or `Taskfile.yml`), written with the container switch when `repo.container` is not `none`. `{stack}/devcontainer.json` is generated for all stacks, and only when `repo.container` is `devcontainer`; `{stack}/check.yml` and the hooks call the repository's runner and follow the container setting. A `{stack}/pre-commit-config.yaml` or `{stack}/check.yml` template is assembled: the shared part (hygiene, secret scan, commit messages, shell, the pre-push check), then the hooks or toolchain of the root stack, of any second stack in the same directory, and of each nested project. Like every template it is only written when the file does not exist; an existing file is never merged into.
 
 Every rule needs `title`, `requirement` and `fix.human`; presets additionally require `rationale` and `fix.agent` (enforced by tests). `fleetlint schema catalog` prints the JSON Schema of this format.
+
+### Sources
+
+A `refs` entry is a URL, or `{url, kind, section}` when the rule says what kind of source it rests on. The kinds, strongest first: `spec`, a language or format specification or an official tool (`gofmt`, `go vet`, the npm documentation of a package.json field); `guidance`, official guidance (Go Code Review Comments, PEP 8, the Rust API Guidelines, a forge's documentation of its own feature); `style-guide`, a public style guide with clear status; `standard`, a standard for process or supply chain (NIST SSDF, SLSA, OpenSSF Scorecard, OWASP ASVS, Keep a Changelog, Conventional Commits, Semantic Versioning); `check`, a linter's check, with `section` its id; `convention`, a convention of the catalog with no outside source, which says so instead of pretending. `section` names the chapter, requirement or check id the rule rests on. A slogan or a blog post is not a source. The rule pages list the sources, `fleetlint explain` prints them, and the check JSON and `fleet.json` carry them as objects. A catalog of the fleetlint project may not add a rule without a typed source (the test keeps a list of the rules that still lack one, and that list only shrinks).
 
 ## CEL predicates
 
@@ -269,6 +275,6 @@ metadata: {name: acme-baseline, version: 1.0.0, engine: 4}
 
 The level counts the changes to what rules can rely on (facts, functions, fix actions) that an older catalog or an older fleetlint would not survive. A binary runs a range of levels. A catalog outside that range is refused when it is loaded, with one message that says whether to upgrade fleetlint or choose another catalog version, instead of its rules failing one by one. A catalog that states no level is loaded as it is. The level is read before the rest of the document, so a catalog that uses a key this fleetlint does not know (level 2 introduced `use:`) is refused with that message, not with a parse error.
 
-Levels so far: 1, the first catalog format; 2, `use:` entries that select from the library; 3, capabilities with per-stack implementations, stacks as catalog data, and CI accessors that read GitLab CI and Forgejo Actions; 4, `combine:` on capabilities (fleetlint 0.5.0); 5, artifacts as catalog data, capabilities keyed by artifact (`by: artifact`), `repo.artifacts` and `artifact_workflows()`, and `metadata.label` (fleetlint 0.6.0).
+Levels so far: 1, the first catalog format; 2, `use:` entries that select from the library; 3, capabilities with per-stack implementations, stacks as catalog data, and CI accessors that read GitLab CI and Forgejo Actions; 4, `combine:` on capabilities (fleetlint 0.5.0); 5, artifacts as catalog data, capabilities keyed by artifact (`by: artifact`), `repo.artifacts` and `artifact_workflows()`, and `metadata.label` (fleetlint 0.6.0); 6, `refs` entries as `{url, kind, section}` (fleetlint 0.7.0).
 
 The presets carry no `metadata.version`: they take the version of the catalog release they ship in (its tag, or the commit for an untagged build), so a report names `fleetlint-recommended@v0.1.0`. Every other catalog states its version.
