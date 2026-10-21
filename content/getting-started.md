@@ -24,7 +24,7 @@ The container image runs on a checkout mounted at `/repo`:
 docker run --rm -v "$PWD:/repo" ghcr.io/fleetlint/fleetlint check
 ```
 
-Every [release](https://github.com/fleetlint/fleetlint/releases) carries archives for Linux, macOS and Windows, `.deb`, `.rpm`, `.apk` and Arch packages, `checksums.txt`, a cosign signature bundle for it and one SBOM per archive and package; the release notes show the `cosign verify-blob` command. The install script checks the archive against `checksums.txt` and, when `cosign` is installed, verifies the signature first; `FLEETLINT_VERIFY=cosign` makes the signature required. The image is signed with cosign too.
+Every [release](https://github.com/fleetlint/fleetlint/releases) carries archives for Linux, macOS and Windows, `.deb`, `.rpm`, `.apk` and Arch packages, `checksums.txt`, a cosign signature bundle for it and one SBOM per archive and package; the release notes show the `cosign verify-blob` command. The install script speaks https only, checks the archive against `checksums.txt`, and verifies more where it can: with `cosign` installed it verifies the signature of `checksums.txt` first; without cosign but with a logged-in `gh` it verifies the archive's build provenance (`gh attestation verify`); with neither it says that only the checksum was checked. `FLEETLINT_VERIFY=cosign` makes the signature required. The image is signed with cosign too.
 
 `fleetlint version` prints the version of the tool and of the catalog built into it; `fleetlint catalog version` shows the catalog version the current repository runs with.
 
@@ -61,6 +61,8 @@ A repository without a remote and without releases is treated as an experiment (
 fleetlint fix             # dry run: what it would create, untrack or edit
 fleetlint fix --apply
 ```
+
+`--apply` refuses a working tree with uncommitted changes to tracked files (exit 2), so the fixes never mix with work in progress: commit or stash first, or pass `--allow-dirty`. Untracked files, such as the `.fleetlint.yaml` `init` just wrote, do not count.
 
 `fix` creates missing files from templates (editor settings, hook configuration, a task runner file, a check workflow, linter, formatter and type-checker configuration), untracks files that should not be in git, and adds values to existing manifests. It never overwrites a file and never changes a key that is already set. What it writes belongs to your repository: edit it freely; the rules check what the files achieve, not that they match a template.
 

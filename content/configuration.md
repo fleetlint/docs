@@ -143,7 +143,7 @@ It applies to that scope only and may override facts, adjust rules (disable with
 
 ## overrides
 
-Adjustments to rules the catalogs brought in, keyed by rule id or by a pattern over ids (`"*"`, `"release/*"`; patterns apply first). An override on a [capability](writing-rules.md#capabilities-one-requirement-one-implementation-per-stack) reaches every implementation (`lint/configured` for all stacks); `<capability>/<stack>` adjusts one (`lint/configured/go`). Exceptions work the same way. Whether every implementation must pass or one is enough (`combine`) is set by the catalog and cannot be overridden.
+Adjustments to rules the catalogs brought in, keyed by rule id or by a pattern over ids (`"*"`, `"release/*"`; patterns apply first). An override on a [capability](writing-rules.md#capabilities-one-requirement-one-implementation-per-stack) reaches every implementation (`lint/configured` for all stacks); `<capability>/<stack>` adjusts one (`lint/configured/go`). Exceptions work the same way. Every implementation that runs must pass; a repository cannot change that.
 
 | Key | Effect |
 |---|---|

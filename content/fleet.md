@@ -11,7 +11,7 @@ description: "Check many repositories and get one report: compliance, the rule m
 ```sh
 fleetlint fleet ~/src/api ~/src/web                 # local paths
 fleetlint fleet --repos fleet.yaml --out reports    # a fleet file
-fleetlint fleet --repos fleet.yaml --update --deep  # pull clones, run make check in each
+fleetlint fleet --repos fleet.yaml --update --deep --deep-clones  # pull clones, run make check in each, clones included
 fleetlint fleet --from github:acme                  # every repository of an owner
 fleetlint fleet --discover ~/src                    # every repository below a directory
 fleetlint fleet --discover ~/src --fix              # what fix --apply would change in each
@@ -43,7 +43,7 @@ An entry may also carry `tier:` (1, 2 or 3) and `visibility:` (`public` or `priv
 
 When neither the fleet file nor the repository says whether it is public, fleet mode asks the forge of the repository's remote, the way `init` does: `GITHUB_TOKEN` (or `GH_TOKEN`) for GitHub, `GITEA_TOKEN` for Gitea. Gitea hosts are asked only when named in `GITEA_HOST` (comma-separated) or as a `--from` source; any other host is not contacted, and its repositories' visibility stays unknown with a note how to name it. A forge that does not show a repository without a token leaves its visibility unknown, with one note per forge at the end of the run. With the GitHub CLI logged in, `GITHUB_TOKEN=$(gh auth token) fleetlint fleet ...` is enough.
 
-Each entry has exactly one of `path` or `url`; a `url` with credentials in it (`https://user:token@…`) is refused, since it would end up in every report. Clones are shallow and reused; `--update` pulls before checking. Each repository is checked with its own `.fleetlint.yaml` (or the defaults), so the fleet view reflects what each repo actually enforces.
+Each entry has exactly one of `path` or `url`; a `url` with credentials in it (`https://user:token@…`) is refused, since it would end up in every report. Clones are shallow and reused; `--update` pulls before checking. A clone lives at `<cache>/<host>/<owner>/<repo>-<hash>`, the hash taken from the URL so two URLs never share a directory; clones from before 0.8 at the old flat path are not reused and can be deleted. Each repository is checked with its own `.fleetlint.yaml` (or the defaults), so the fleet view reflects what each repo actually enforces.
 
 ## Discovering repositories in a directory
 
@@ -62,7 +62,7 @@ fleetlint fleet --from gitea:git.example.com/platform   # a Gitea or Forgejo ins
 fleetlint fleet --repos fleet.yaml --from github:acme   # in addition to a fleet file
 ```
 
-`--from` asks the forge's REST API for the owner's repositories and adds each as a `url` entry with the visibility the forge reports. Archived repositories and forks are skipped. Without a token only public repositories are listed; `GITHUB_TOKEN` (or `GH_TOKEN`) and `GITEA_TOKEN` are read from the environment and sent to that forge only; a `--from` source names its Gitea host, so it needs no `GITEA_HOST`. `GITHUB_API_URL` selects a GitHub Enterprise Server instance. Clones of discovered repositories send the same token as an `Authorization` header scoped to the forge's host (the way `actions/checkout` does), so private repositories clone over https without further git setup; repositories from a fleet file use git's own credentials. Clones go to `--cache`, or to the user cache directory when none is given. fleetlint only reads: it never writes to the forge.
+`--from` asks the forge's REST API for the owner's repositories and adds each as a `url` entry with the visibility the forge reports. Archived repositories and forks are skipped. Without a token only public repositories are listed; `GITHUB_TOKEN` (or `GH_TOKEN`) and `GITEA_TOKEN` are read from the environment and sent to that forge only; a `--from` source names its Gitea host, so it needs no `GITEA_HOST`. `GITHUB_API_URL` selects a GitHub Enterprise Server instance. Clones of discovered repositories send the same token as an `Authorization` header scoped to the forge's host (the way `actions/checkout` does), so private repositories clone over https without further git setup; repositories from a fleet file use git's own credentials. Clones go to `--cache`, or to the user cache directory when none is given. A clone URL the forge returns must be `https://`, `ssh://` or `git@` on the forge's own host (for GitHub Enterprise also the host of `GITHUB_API_URL`); any other URL, a local path among them, fails the run naming the repository. fleetlint only reads: it never writes to the forge.
 
 ## Fixing across the fleet
 
@@ -72,7 +72,7 @@ fleetlint fleet --discover ~/src --fix --apply --rule hooks/config-present   # o
 fleetlint fleet --discover ~/src --fix --apply                               # every mechanical fix
 ```
 
-`--fix` plans what `fleetlint fix` would change in every local repository and lists it per repository; `--apply` writes it, and the report then shows the state after the fixes. `--rule` limits both to one rule (repeatable), which suits working down the top levers. Existing files are never overwritten, nothing is committed, and cloned `url` entries are left alone: review and commit in each repository, or let `fleetlint init --pr` open the pull requests. A repository with uncommitted changes to tracked files is left unfixed and the report notes it, unless `--allow-dirty` is given; untracked files do not count. `fleetlint fix --apply` on its own refuses such a tree the same way.
+`--fix` plans what `fleetlint fix` would change in every local repository and lists it per repository; `--apply` writes it, and the report then shows the state after the fixes. `--rule` limits both to one rule (repeatable), which suits working down the top levers. Existing files are never overwritten, nothing is committed, and cloned `url` entries are left alone: review and commit in each repository, or let `fleetlint init --pr` open the pull requests. A repository with uncommitted changes to tracked files is left unfixed and the report notes it, unless `--allow-dirty` is given; untracked files do not count, a repository without git is never dirty, and one whose state git cannot report is left alone too. `fleetlint fix --apply` on its own refuses such a tree the same way.
 
 ## Output directory
 
@@ -80,13 +80,13 @@ fleetlint fleet --discover ~/src --fix --apply                               # e
 |---|---|
 | `fleet.html` | self-contained page with the sections below. One inline script sorts the tables and filters the matrix; without it the page reads the same, and it works from a file share. |
 | `fleet.md` | the same sections as Markdown, for a wiki or an issue |
-| `fleet.json` | machine-readable: every result, all facts, git state, team and group summaries. Each rule definition is stored once under `definitions`; a result names its rule by id in `rule`, and in `definition` when the repository adjusted it. Field names are snake_case (`version: 3`). |
+| `fleet.json` | machine-readable: every result, all facts, git state, team and group summaries. Each rule definition is stored once under `definitions`; a result names its rule by id in `rule`, and in `definition` when the repository adjusted it. Field names are snake_case (`version: 6`, below). |
 | `fleet.csv` | one row per repository (team, group, visibility, tier and its source, compliance, counts, fixable findings, rule errors, branch, commit, uncommitted changes, last commit, stale), for a spreadsheet or existing reporting |
 | `actions/<repo>.md` | the ordered task list for that repository, ready to hand to a coding agent; it starts with `fleetlint fix --apply` when part of the work is mechanical |
-| `sarif/<repository>.sarif` | one SARIF file per checked repository (`/` in the fleet name becomes `--`), the same output as `fleetlint check --format sarif`, with one run per scope keyed `fleetlint/<fleet name>` and `fleetlint/<fleet name>/<scope>`, for uploading to code scanning per repository |
+| `sarif/<repository>.sarif` | one SARIF file per checked repository (`/` in the fleet name becomes `--`), the same output as `fleetlint check --format sarif`, with one run per scope keyed `fleetlint/<fleet name>/` and `fleetlint/<fleet name>/<scope>/`, for uploading to code scanning per repository |
 | `history/<timestamp>.json` | a copy of `fleet.json` per run; the next run into the same directory compares with the latest one, also across format versions. Keep the directory in git or a bucket to see drift over time |
 
-`fleet.json` carries `version: 6`: each repository lists its `catalogs` in the order they applied, with label, name, version and the digest or artifact that pins each, a rule's `refs` are objects with `url`, `kind` and `section`, and a published artifact in `facts.artifacts` has a `kind`, a `name` where the catalog names instances, and its `workflows`.
+`fleet.json` carries `version: 6`: each repository lists its `catalogs` in the order they applied, with label, name, version and the digest or artifact that pins each, a rule's `refs` are objects with `url`, `kind` and `section`, a published artifact in `facts.artifacts` has a `kind`, a `name` where the catalog names instances, and its `workflows`, a finding its `anchor` and `artifact` where it has them, and a repository's `notes` say what the run left out for it.
 
 Compliance is the share of applicable rules that pass or are excepted. A rule that could not be evaluated (a file fleetlint cannot parse, say) is left out of it and reported as a rule error instead. A repository that could not be checked (missing path, clone failure, invalid config) is listed with its error and never counted as compliant.
 
@@ -96,7 +96,7 @@ Compliance is the share of applicable rules that pass or are excepted. A rule th
 |---|---|
 | Since the last run | compared with the latest earlier run in `history/`: rules failing at error severity before and after, and per repository the rules that newly fail and the ones that were fixed. Absent on the first run |
 | Top levers | which rules hold back most repositories: ranked by the repositories they fail at error severity, then by all failures, with how many `fix --apply` repairs and how much of the errors and of all failures fixing the first ones closes |
-| Repositories | most urgent first (could not be checked, then errors, rule errors, warnings, lowest compliance); tier (marked when inferred or default), visibility, compliance, fixable findings, rule errors, the branch and commit that were checked with the number of uncommitted changes (rules read the working tree), and the last commit, marked stale after a year |
+| Repositories | most urgent first (could not be checked, then errors, rule errors, warnings, lowest compliance); tier (marked when inferred or default), visibility, compliance, fixable findings, rule errors, the branch and commit that were checked with the number of uncommitted changes, untracked files included (rules read the working tree), and the last commit, marked stale after a year; a Notes column when the run left something out for a repository (code not executed in a clone, fixes not applied to a dirty checkout) |
 | Groups, Teams | totals per group and per team |
 | Rule errors | every rule that could not be evaluated, with the error |
 | Rules | per rule, how many repositories pass, fail, can be fixed mechanically, errored, are excepted, do not apply, or do not select it. Rules that apply nowhere are named in one line instead |
