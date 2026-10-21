@@ -119,6 +119,6 @@ The report lists every disabled rule, every lowered severity and every exception
 
 ## Onboarding many repositories
 
-The output directory is a complete static site: `index.html` duplicates `fleet.html`, and every action list exists as both `.md` (for an agent) and `.html` (for a browser), so pointing GitHub or Gitea Pages at the directory publishes the report. `deploy/demo/` holds the fleet file and workflow behind demo.fleetlint.org.
+The output directory is a complete static site: `index.html` duplicates `fleet.html`, and every action list exists as both `.md` (for an agent) and `.html` (for a browser), so pointing GitHub or Gitea Pages at the directory publishes the report. The [demo](demo.md) at fleetlint.org/demo/report/ is exactly that: the deploy workflow of the docs repository runs `fleetlint fleet` over `demo/fleet.yaml` on every build and nightly.
 
 In each repository, `fleetlint init --pr` writes the configuration, commits it on the branch `fleetlint/onboarding` as you, and opens a pull request with the Markdown report as its description using `gh` (GitHub) or `tea` (Gitea). When it cannot open the pull request, it says which part is missing: the branch is pushed and only the pull request is missing (no `gh` or `tea`, or they failed), or the push failed, with the command to push it.
