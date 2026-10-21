@@ -86,7 +86,7 @@ fleetlint fleet --discover ~/src --fix --apply                               # e
 | `sarif/<repository>.sarif` | one SARIF file per checked repository (`/` in the fleet name becomes `--`), the same output as `fleetlint check --format sarif`, with `automationDetails.id` set to `fleetlint/<fleet name>`, for uploading to code scanning per repository |
 | `history/<timestamp>.json` | a copy of `fleet.json` per run; the next run into the same directory compares with the latest one, also across format versions. Keep the directory in git or a bucket to see drift over time |
 
-`fleet.json` carries `version: 5`: each repository lists its `catalogs` in the order they applied, with label, name, version and the digest or artifact that pins each, and a rule's `refs` are objects with `url`, `kind` and `section`.
+`fleet.json` carries `version: 6`: each repository lists its `catalogs` in the order they applied, with label, name, version and the digest or artifact that pins each, a rule's `refs` are objects with `url`, `kind` and `section`, and a published artifact in `facts.artifacts` has a `kind`, a `name` where the catalog names instances, and its `workflows`.
 
 Compliance is the share of applicable rules that pass or are excepted. A rule that could not be evaluated (a file fleetlint cannot parse, say) is left out of it and reported as a rule error instead. A repository that could not be checked (missing path, clone failure, invalid config) is listed with its error and never counted as compliant.
 
