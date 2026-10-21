@@ -23,14 +23,19 @@ help: ## list targets
 tools: ## install fleetlint; everything else comes from mise.toml
 	go install github.com/fleetlint/fleetlint/cmd/fleetlint@$(FLEETLINT_VERSION)
 
-gen: ## regenerate next's rule pages and CEL reference from the catalog built into fleetlint
+gen: ## regenerate next's rule pages and CEL reference from the catalog built into fleetlint, and the install script of that release
 	fleetlint docs --out content --index-file _index.md
+	curl --proto '=https' --tlsv1.2 -fsSL "$(INSTALL_SH)" -o static/install.sh
+
+# The install script served as https://fleetlint.org/install.sh is the one of the release the pages come from.
+INSTALL_SH := https://raw.githubusercontent.com/fleetlint/fleetlint/$(strip $(FLEETLINT_VERSION))/scripts/install.sh
 
 fmt: ## nothing to format: Markdown is written by hand, the generated pages by fleetlint
 	@true
 
-lint: ## the generated pages and the version config are current, and every version builds without warnings
+lint: ## the generated pages, the install script and the version config are current, and every version builds without warnings
 	fleetlint docs --out content --index-file _index.md --check
+	curl --proto '=https' --tlsv1.2 -fsSL "$(INSTALL_SH)" | cmp -s - static/install.sh || { echo "static/install.sh is not the one of $(FLEETLINT_VERSION): run make gen"; exit 1; }
 	python3 scripts/versions.py check
 	rm -rf public
 	hugo --quiet --panicOnWarning --environment development --destination public
