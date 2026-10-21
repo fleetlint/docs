@@ -83,9 +83,10 @@ fleetlint fleet --discover ~/src --fix --apply                               # e
 | `fleet.json` | machine-readable: every result, all facts, git state, team and group summaries. Each rule definition is stored once under `definitions`; a result names its rule by id in `rule`, and in `definition` when the repository adjusted it. Field names are snake_case (`version: 3`). |
 | `fleet.csv` | one row per repository (team, group, visibility, tier and its source, compliance, counts, fixable findings, rule errors, branch, commit, uncommitted changes, last commit, stale), for a spreadsheet or existing reporting |
 | `actions/<repo>.md` | the ordered task list for that repository, ready to hand to a coding agent; it starts with `fleetlint fix --apply` when part of the work is mechanical |
+| `sarif/<repository>.sarif` | one SARIF file per checked repository (`/` in the fleet name becomes `--`), the same output as `fleetlint check --format sarif`, with `automationDetails.id` set to `fleetlint/<fleet name>`, for uploading to code scanning per repository |
 | `history/<timestamp>.json` | a copy of `fleet.json` per run; the next run into the same directory compares with the latest one, also across format versions. Keep the directory in git or a bucket to see drift over time |
 
-`fleet.json` carries `version: 4`: each repository lists its `catalogs` in the order they applied, with label, name, version and the digest or artifact that pins each.
+`fleet.json` carries `version: 5`: each repository lists its `catalogs` in the order they applied, with label, name, version and the digest or artifact that pins each, and a rule's `refs` are objects with `url`, `kind` and `section`.
 
 Compliance is the share of applicable rules that pass or are excepted. A rule that could not be evaluated (a file fleetlint cannot parse, say) is left out of it and reported as a rule error instead. A repository that could not be checked (missing path, clone failure, invalid config) is listed with its error and never counted as compliant.
 
