@@ -72,7 +72,7 @@ fleetlint fleet --discover ~/src --fix --apply --rule hooks/config-present   # o
 fleetlint fleet --discover ~/src --fix --apply                               # every mechanical fix
 ```
 
-`--fix` plans what `fleetlint fix` would change in every local repository and lists it per repository; `--apply` writes it, and the report then shows the state after the fixes. `--rule` limits both to one rule (repeatable), which suits working down the top levers. Existing files are never overwritten, nothing is committed, and cloned `url` entries are left alone: review and commit in each repository, or let `fleetlint init --pr` open the pull requests.
+`--fix` plans what `fleetlint fix` would change in every local repository and lists it per repository; `--apply` writes it, and the report then shows the state after the fixes. `--rule` limits both to one rule (repeatable), which suits working down the top levers. Existing files are never overwritten, nothing is committed, and cloned `url` entries are left alone: review and commit in each repository, or let `fleetlint init --pr` open the pull requests. A repository with uncommitted changes to tracked files is left unfixed and the report notes it, unless `--allow-dirty` is given; untracked files do not count. `fleetlint fix --apply` on its own refuses such a tree the same way.
 
 ## Output directory
 
@@ -116,7 +116,7 @@ The report lists every disabled rule, every lowered severity and every exception
 
 ## Exit code
 
-`--fail` makes the command exit 1 when any repository has error-severity findings, a rule error, or could not be checked, for use in a scheduled job. Command rules in the repositories run only when the fleet run is given `--deep`, and `make check` runs with an environment without credentials (tokens, cloud keys, CI secrets).
+`--fail` makes the command exit 1 when any repository has error-severity findings, a rule error, or could not be checked, for use in a scheduled job. Command rules in the repositories run only when the fleet run is given `--deep`, and `make check` runs with an environment without credentials (tokens, cloud keys, CI secrets). Cloned repositories (`url` entries, `--from`) are checked without their command rules even then, since that would execute code from repositories you may not control; `--deep-clones` runs them there too, and the report notes which repositories were skipped.
 
 ## Onboarding many repositories
 
