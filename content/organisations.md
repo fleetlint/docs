@@ -172,9 +172,16 @@ signers:
 catalogs:
   org: oci://ghcr.io/acme/fleetlint-catalog:3
   team/platform: oci://ghcr.io/acme/fleetlint-catalog@sha256:<digest>
+  team/mobile:
+    ref: oci://ghcr.io/acme/mobile-catalog:2
+    signers:
+      - issuer: https://token.actions.githubusercontent.com
+        subject_regex: '^https://github\.com/acme/mobile-standards/\.github/workflows/publish\.yml@refs/tags/v'
+    min_version: 2.4.0
 ```
 
-- An `oci://<registry>/<repository>:<tag>` reference is accepted only when the sources file lists `signers`; a `@sha256:<digest>` reference needs none. When signers are listed, the signature is verified for every `oci://` catalog, digest or not.
+- An `oci://<registry>/<repository>:<tag>` reference is accepted only when signers are listed for it, in the sources file's `signers` or on the entry itself; a `@sha256:<digest>` reference needs none. When signers are listed, the signature is verified for every `oci://` catalog, digest or not.
+- A `catalogs:` entry is the reference, or `{ref, signers, min_version}`. `signers` on an entry verify that catalog alone and replace the top-level `signers` for it, so a team that publishes from its own repository is trusted for its own catalog and for nothing else; an entry without `signers` keeps the top-level ones, which also verify the `catalog:` pin. `min_version` is a floor on the loaded catalog's `metadata.version` (a semantic version, with or without a leading `v`): a catalog below it fails the run, naming the alias, the loaded version and the floor. A tag such as `:3` follows the publisher, so the floor is how every repository notices the tag being moved back to an older release.
 - A signer is an OIDC `issuer` plus the certificate `subject`, exact or as `subject_regex`. For GitHub Actions the subject is the workflow reference (`https://github.com/<owner>/<repo>/.github/workflows/<file>@refs/tags/<tag>`); for a person signing with `cosign sign` it is their e-mail with `issuer: https://accounts.google.com` or another identity provider. Verification uses the sigstore public-good instance: the certificate chain, the transparency-log entry or a signed timestamp, and the certificate's signed certificate timestamp. The bundle must be attached to the artifact in the sigstore bundle format (`cosign sign --new-bundle-format`, cosign 2.5 or later); the older `.sig` tag layout is not read.
 - Every layer of the artifact with an `org.opencontainers.image.title` annotation is a file, which is what `oras push <ref> <files...>` produces. Files named `*.yaml` at the root are catalogs, loaded in name order. Files under `templates/` are **fix templates that travel with the catalog**: `fleetlint fix` takes them before the preset's templates, so the organization's `SECURITY.md`, hook fragments or workflow head replace the public ones without a fork of fleetlint. The same trust applies: a template is written only from a catalog that was pinned or whose signature was verified.
 - The registry is read with the credentials docker or oras already stored (`docker login`, `oras login`, credential helpers). Registries on `localhost` are spoken to over plain http, as in tests.
