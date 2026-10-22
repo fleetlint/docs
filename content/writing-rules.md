@@ -62,6 +62,19 @@ rules:
 
 `{taskrunner}` is the runner file for the repository's task runner (`Makefile`, `justfile` or `Taskfile.yml`), written with the container switch when `repo.container` is not `none`. `{stack}/devcontainer.json` is generated for all stacks, and only when `repo.container` is `devcontainer`; `{stack}/check.yml` and the hooks call the repository's runner and follow the container setting. A `{stack}/pre-commit-config.yaml` or `{stack}/check.yml` template is assembled: the shared part (hygiene, secret scan, commit messages, shell, the pre-push check), then the hooks or toolchain of the root stack, of any second stack in the same directory, and of each nested project. Like every template it is only written when the file does not exist; an existing file is never merged into.
 
+### Where templates come from
+
+A template name such as `editorconfig` or `go/pre-commit-config.yaml` is the path below `templates/`. It is looked up in layers, and the first layer that has the file wins:
+
+1. The catalogs of the run that ship templates, the last one applied first (see [composition](composition.md) for the order).
+2. The run's catalog source: the catalog built into the binary, or the version a `catalog:` pin names (a tag or commit of the catalog repository, or its OCI artifact).
+
+Only two kinds of catalog ship templates: an `oci://` catalog (its files under `templates/`) and a `git+` catalog pinned to a full commit SHA (the `templates/` directory next to the catalog file, at most 16 MiB). A `git+` catalog pinned to a tag, an `https://` catalog, a local catalog file or directory in the repository and `.fleetlint.yaml` bring none; a `templates/` directory next to them is not read.
+
+A layer replaces a template by its file name, as a whole: there is no way to extend a template with extra lines. The assembled templates (`{stack}/pre-commit-config.yaml`, `{stack}/check.yml`, `{stack}/release.yml`) are put together from fragments under `templates/pre-commit/`, `templates/check/` and `templates/release/` (for example `check/head.yml`, `check/go.yml`, `check/tail.yml`), and each fragment can be replaced on its own. The dry run of `fleetlint fix` names the catalog a change's template came from when it is not the catalog source: `(template from catalog oci://...)`.
+
+A repository cannot provide or replace a template itself: `.fleetlint.yaml` has no key for templates, `overrides:` cannot change a rule's `fix.actions`, and a repository cannot redefine a catalog rule. For one repository, run `fleetlint fix` once and edit the file it wrote: `fix` never overwrites a file, and the rule checks what the file achieves, not that it matches the template. For many repositories, publish a catalog that includes the standard preset and ships `templates/<name>`, and extend it from each repository; changing the template then means a new commit or artifact and moving the pin.
+
 Every rule needs `title`, `requirement` and `fix.human`; presets additionally require `rationale` and `fix.agent` (enforced by tests). `fleetlint schema catalog` prints the JSON Schema of this format.
 
 ### Where a finding points
