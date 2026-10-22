@@ -105,6 +105,8 @@ fleetlint detects these on every run; `fleetlint facts` prints them with where e
 
 `facts:` holds what applies to the whole repository. Stacks and the task runner are set per directory, under [`scopes`](#scopes).
 
+The owner is detected but not set here: the file that names it is the place to change it. `fleetlint facts` shows it as `owner` with the file it came from. Backstage's `catalog-info.yaml` wins with `spec.owner` (`group:default/payments` and `payments` are both `payments`; another namespace stays, `group:ops/payments` is `ops/payments`). Without it, the CODEOWNERS default owner counts: the first owner of the last rule for every file (`*`, `/*`, `**` or `/**`), without its `@`, from `.github/CODEOWNERS`, `CODEOWNERS`, `docs/CODEOWNERS`, `.gitea/CODEOWNERS` or `.gitlab/CODEOWNERS`, the first that exists; GitLab sections are skipped. Nothing asks the forge. In fleet mode the owner is the repository's team unless its fleet file entry names one ([fleet](fleet.md)).
+
 `container` is a choice as much as a fact. Set it to say where the task runner's targets run: on the machine, in the dev container, or in an image run with docker or podman. `fix` then writes the runner file, hooks and check workflow for that combination. [The baseline](baseline.md#task-runner-contract) describes both.
 
 ## scopes
@@ -182,6 +184,9 @@ An exception accepts individual findings of a rule that keeps running:
 | `match` | a glob against the finding's path, or `re:<regex>` against its message (a regex that does not compile is a configuration error); without it every finding of the rule |
 | `reason` | required |
 | `until` | a date; afterwards the findings count again and the report marks the exception as expired |
+| `approved_by` | who agreed to the exception, a person or team as your organization names them (`"@acme/security"`); shown in the table, the fleet report and SARIF. fleetlint records it and does not check it: who may approve is enforced by review of `.fleetlint.yaml`, for example with a CODEOWNERS entry for it |
+
+A catalog's `exception_policy` can require `until` and `approved_by` and cap how far `until` may lie ahead; see [organisations](organisations.md#exception-policy).
 
 ## Baseline
 

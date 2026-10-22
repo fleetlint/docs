@@ -119,6 +119,19 @@ rules:
 
 Violations are configuration errors at load time (exit 2), not weaker checks at run time, and they name the catalog that set the constraint. Raising the severity of a locked rule and reasoned exceptions on it remain possible, `params` and `accept` do not (both only widen what satisfies the rule; the locking catalog sets them); the report shows every one.
 
+### Exception policy
+
+What an exception must say is set once, for every repository that extends the catalog:
+
+```yaml
+exception_policy:
+  require_until: true      # every exception has an expiry date
+  max_days: 90             # until is at most 90 days after the run (implies require_until)
+  require_approver: true   # every exception names approved_by
+```
+
+The policy binds the exceptions of the catalog that sets it and of everything loaded after it: later catalogs, the repository's `.fleetlint.yaml`, its scopes and nested files. Policies of several catalogs add up, so a team catalog can tighten the organization's (a smaller `max_days`) but never loosen it. An exception that breaks the policy is a configuration error (exit 2) that names the exception's rule and the catalogs whose policy it breaks. `max_days` is counted from the day of the run, so an exception written for 90 days stays valid until it expires; an expired one is no error, its findings simply count again. The policy checks what an exception says, not who wrote it: `approved_by` is a name fleetlint records without verifying, and the approval itself is the review of the change to `.fleetlint.yaml`.
+
 Locks only hold for catalogs that are actually loaded. A repository could drop the baseline from `extends`, so enforcement belongs where the check runs: the organization's CI template and fleet runner pass `--require acme-baseline` (a catalog name, a ref, or `ref#sha256-<digest>` to pin the exact version). A repository whose effective configuration lacks that catalog fails with exit 2 before any rule runs, and in fleet mode becomes an error row. The flag is persistent, so `fix`, `explain` and `baseline` refuse under a weaker configuration too.
 
 ## Names: the sources file
