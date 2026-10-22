@@ -97,7 +97,7 @@ fleetlint detects these on every run; `fleetlint facts` prints them with where e
 
 | Fact | Values | Detected from |
 |---|---|---|
-| `tier` | `1` production or public, `2` a tool you rely on, `3` an experiment | inferred: public or has a release pipeline: 1; CI or tags: 2; otherwise 3 (`default`). `fleetlint facts` and every report say which fact decided |
+| `tier` | `1` production or public, `2` a tool you rely on, `3` an experiment | inferred: public or has a release pipeline: 1; CI or tags: 2; otherwise 3 (`default`). A scope whose tier nobody sets takes the repository's when that is more serious, since workflows and releases live at the root. `fleetlint facts` and every report say which fact decided |
 | `visibility` | `public`, `private` | not detected by `check`; `init` asks the forge once and writes it |
 | `forge` | `github`, `gitea`, `gitlab` | the `origin` remote |
 | `container` | `none`, `devcontainer`, `docker`, `podman` | `devcontainer` when a devcontainer.json exists, else `none` |
@@ -179,13 +179,13 @@ An exception accepts individual findings of a rule that keeps running:
 | Key | Meaning |
 |---|---|
 | `rule` | the rule id |
-| `match` | a glob against the finding's path, or `re:<regex>` against its message; without it every finding of the rule |
+| `match` | a glob against the finding's path, or `re:<regex>` against its message (a regex that does not compile is a configuration error); without it every finding of the rule |
 | `reason` | required |
 | `until` | a date; afterwards the findings count again and the report marks the exception as expired |
 
 ## Baseline
 
-`fleetlint baseline` writes `.fleetlint-baseline.json` with a fingerprint (rule, scope, path, message, and the artifact's name for a finding about a named artifact) of every current finding. Where a report points (a rule's `locate`) is not part of it. From then on those findings report as *baselined* instead of failing, so `fleetlint check` is green today and fails only on findings that are new.
+`fleetlint baseline` writes `.fleetlint-baseline.json` with a fingerprint (rule, scope, path, message, and the artifact's name for a finding about a named artifact) of every current finding. Where a report points (a rule's `locate`) is not part of it. From then on those findings report as *baselined* instead of failing, so `fleetlint check` is green today and fails only on findings that are new. Two findings with the same fingerprint (the same message on the same file) are two entries, so a third copy is new and fails.
 
 The file can only shrink. Re-running `fleetlint baseline` drops entries that no longer match and refuses to add new ones; the report says how many entries are "paid off" after each run. `--reset` starts over and grandfathers everything, which is a deliberate act you should see in a diff. Commit the file; a pull request that grows it is a pull request that weakens the policy.
 
