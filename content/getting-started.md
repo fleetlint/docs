@@ -51,7 +51,7 @@ fleetlint hierarchy                   # the catalogs of the run in the order the
 fleetlint init
 ```
 
-writes a `.fleetlint.yaml` that extends the `recommended` preset, with what was discovered as a comment. On GitHub or Gitea it asks the forge once whether the repository is public and records the answer, because some rules apply to public repositories only. Nothing else is pinned: facts are detected again on every run.
+writes a `.fleetlint.yaml` that extends the `recommended` preset, with what was discovered as a comment. On GitHub, Gitea or GitLab it asks the forge once whether the repository is public and records the answer, because some rules apply to public repositories only. Nothing else is pinned: facts are detected again on every run.
 
 A repository without a remote and without releases is treated as an experiment (tier 3), which is asked for very little. Say what it is with `fleetlint init --tier 1` (production or public) or `--tier 2` (a tool you rely on).
 
@@ -60,9 +60,12 @@ A repository without a remote and without releases is treated as an experiment (
 ```sh
 fleetlint fix             # dry run: what it would create, untrack or edit
 fleetlint fix --apply
+fleetlint fix --apply --pr  # the same as a pull request against the default branch
 ```
 
 `--apply` refuses a working tree with uncommitted changes to tracked files (exit 2), so the fixes never mix with work in progress: commit or stash first, or pass `--allow-dirty`. Untracked files, such as the `.fleetlint.yaml` `init` just wrote, do not count.
+
+`--apply --pr` does not touch the working tree. It checks out the default branch as `origin` has it into a temporary worktree, applies the fixes there, commits them on the branch `fleetlint/fixes` as you (with the repository's git hooks off), force-pushes that branch and opens a pull request from it, or updates the one that is open, with the list of changes and the report as its description. A protected default branch and uncommitted work in the checkout are both fine. fleetlint owns `fleetlint/fixes`: the next run rebuilds it from the default branch, so commit your own changes elsewhere. With `GITHUB_TOKEN` (or `GH_TOKEN`), `GITEA_TOKEN` or `GITLAB_TOKEN` set, the forge's API opens the pull request and finds the default branch; without a token, `gh`, `tea` or `glab` opens it (a new one only: an open pull request keeps its description), and the default branch comes from `origin/HEAD`.
 
 `fix` creates missing files from templates (editor settings, hook configuration, a task runner file, a check workflow, linter, formatter and type-checker configuration), untracks files that should not be in git, and adds values to existing manifests. It never overwrites a file and never changes a key that is already set. What it writes belongs to your repository: edit it freely; the rules check what the files achieve, not that they match a template.
 
