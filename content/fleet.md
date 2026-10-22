@@ -84,7 +84,7 @@ fleetlint fleet --discover ~/src --fix --apply                               # e
 | `fleet.csv` | one row per repository (team, group, visibility, tier and its source, compliance, counts, fixable findings, rule errors, branch, commit, uncommitted changes, last commit, stale), for a spreadsheet or existing reporting |
 | `actions/<repo>.md` | the ordered task list for that repository, ready to hand to a coding agent; it starts with `fleetlint fix --apply` when part of the work is mechanical |
 | `sarif/<repository>.sarif` | one SARIF file per checked repository (`/` in the fleet name becomes `--`), the same output as `fleetlint check --format sarif`, with one run per scope keyed `fleetlint/<fleet name>/` and `fleetlint/<fleet name>/<scope>/`, for uploading to code scanning per repository |
-| `history/<timestamp>.json` | a copy of `fleet.json` per run; the next run into the same directory compares with the latest one, also across format versions. Keep the directory in git or a bucket to see drift over time |
+| `history/<timestamp>.json` | a compact copy of `fleet.json` per run (none for a `--fix` dry run; `--keep-history N` keeps the latest N); the next run into the same directory compares with the latest one, also across format versions. Keep the directory in git or a bucket to see drift over time |
 
 `fleet.json` carries `version: 6`: each repository lists its `catalogs` in the order they applied, with label, name, version and the digest or artifact that pins each, a rule's `refs` are objects with `url`, `kind` and `section`, a published artifact in `facts.artifacts` has a `kind`, a `name` where the catalog names instances, and its `workflows`, a finding its `anchor` and `artifact` where it has them, and a repository's `notes` say what the run left out for it.
 
@@ -116,7 +116,7 @@ The report lists every disabled rule, every lowered severity and every exception
 
 ## Exit code
 
-`--fail` makes the command exit 1 when any repository has error-severity findings, a rule error, or could not be checked, for use in a scheduled job. Command rules in the repositories run only when the fleet run is given `--deep`, and `make check` runs with an environment without credentials (tokens, cloud keys, CI secrets). Cloned repositories (`url` entries, `--from`) are checked without their command rules even then, since that would execute code from repositories you may not control; `--deep-clones` runs them there too, and the report notes which repositories were skipped.
+`--jobs N` (default 4) checks that many repositories at once; a crash while checking one is reported as that repository's error and the others are still checked. `--fail` makes the command exit 1 when any repository has error-severity findings, a rule error, or could not be checked, for use in a scheduled job. Command rules in the repositories run only when the fleet run is given `--deep`, and `make check` runs with an environment without credentials (tokens, cloud keys, CI secrets). Cloned repositories (`url` entries, `--from`) are checked without their command rules even then, since that would execute code from repositories you may not control; `--deep-clones` runs them there too, and the report notes which repositories were skipped.
 
 ## Onboarding many repositories
 
