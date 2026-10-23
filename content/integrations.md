@@ -34,6 +34,8 @@ The hook builds fleetlint with the Go toolchain prek manages, runs `fleetlint ch
 
 [fleetlint/action](https://github.com/fleetlint/action) installs the release binary (checked against `checksums.txt`, and against its cosign signature when `cosign` is on PATH), annotates every finding on its file and line, writes the report into the job summary and fails the step at `fail-on`. No Go toolchain needed. Gitea and Forgejo run it as `uses: https://github.com/fleetlint/action@<commit SHA>`; skip the SARIF upload there. The action has no release yet, so pin `uses:` to a commit SHA.
 
+With `mode: pr` the action proposes changes on the repository it runs in, with the run's own token: the onboarding pull request (`fleetlint init --pr`) when the repository has no `.fleetlint.yaml`, else the fixes pull request (`fleetlint fix --apply --pr`), updated on every run. The job needs `contents: write` and `pull-requests: write`, and on GitHub the setting *Allow GitHub Actions to create and approve pull requests*. A pull request opened with `GITHUB_TOKEN` starts no workflows; a GitHub App token (`actions/create-github-app-token`) or a fine-grained token passed as `token:` does. Gitea and Forgejo run the same step, with the instance and its API taken from the job.
+
 ## GitLab CI
 
 ```yaml
