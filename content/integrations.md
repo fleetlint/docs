@@ -32,18 +32,34 @@ The hook builds fleetlint with the Go toolchain prek manages, runs `fleetlint ch
     sarif_file: fleetlint.sarif
 ```
 
-[fleetlint/action](https://github.com/fleetlint/action) installs the release binary (checked against `checksums.txt`, and against its cosign signature when `cosign` is on PATH), annotates every finding on its file and line, writes the report into the job summary and fails the step at `fail-on`. No Go toolchain needed. Gitea and Forgejo run it as `uses: https://github.com/fleetlint/action@<commit SHA>`; skip the SARIF upload there. The action has no release yet, so pin `uses:` to a commit SHA.
+[fleetlint/action](https://github.com/fleetlint/action) installs the release binary (checked against `checksums.txt`, and against its cosign signature when `cosign` is on PATH), annotates every finding on its file and line, writes the report into the job summary and fails the step at `fail-on`. No Go toolchain needed. The action has no release yet, so pin `uses:` to a commit SHA.
 
-With `mode: pr` the action proposes changes on the repository it runs in, with the run's own token: the onboarding pull request (`fleetlint init --pr`) when the repository has no `.fleetlint.yaml`, else the fixes pull request (`fleetlint fix --apply --pr`), updated on every run. The job needs `contents: write` and `pull-requests: write`, and on GitHub the setting *Allow GitHub Actions to create and approve pull requests*. A pull request opened with `GITHUB_TOKEN` starts no workflows; a GitHub App token (`actions/create-github-app-token`) or a fine-grained token passed as `token:` does. Gitea and Forgejo run the same step, with the instance and its API taken from the job.
+Gitea and Forgejo run it by its full URL, `uses: https://github.com/fleetlint/action@<commit SHA>` (Forgejo resolves a short `uses:` against its own actions instance), on a runner with `bash`, `curl` and `tar`. The report goes into the job summary, which Forgejo shows from v17 with runner v13.2; annotations are off by default there (`annotations: auto`), since neither forge shows them, and there is no code scanning to upload SARIF to. Tested on Forgejo 17 with runner 13.2; Gitea runs the same steps but is not tested.
+
+With `mode: pr` the action proposes changes on the repository it runs in, with the run's own token: the onboarding pull request (`fleetlint init --pr`) when the repository has no `.fleetlint.yaml`, else the fixes pull request (`fleetlint fix --apply --pr`), updated on every run. The job needs `contents: write` and `pull-requests: write`, and on GitHub the setting *Allow GitHub Actions to create and approve pull requests*. A pull request opened with `GITHUB_TOKEN` starts no workflows; a GitHub App token (`actions/create-github-app-token`) or a fine-grained token passed as `token:` does. Gitea and Forgejo run the same step, with the instance and its API taken from the job; the commit is the instance's Actions user's (`forgejo-actions`, `gitea-actions`), and on Forgejo the job's own token can push and open the pull request.
 
 ## GitLab CI
 
+The [fleetlint components](https://github.com/fleetlint/gitlab-components) for the GitLab CI/CD catalog:
+
 ```yaml
 include:
-  - remote: https://raw.githubusercontent.com/fleetlint/fleetlint/v0.4.1/ci/gitlab/fleetlint.yml
+  - component: gitlab.com/fleetlint/components/check@0.8.1
+    inputs:
+      fail-on: warning
+  - component: gitlab.com/fleetlint/components/pr@0.8.1   # needs a release after 0.8.1
 ```
 
-The job installs the release of the tag it is included from, with that tag's install script, and requires the cosign signature of its checksums. It reports the findings in the merge request's Code Quality widget and fails at `FLEETLINT_FAIL_ON` (default `error`).
+A component version installs the fleetlint release of the same number, with that tag's install script, and requires the cosign signature of its checksums (`verify: checksum` checks the checksum only). `check` reports the findings in the merge request's Code Quality widget, keeps `fleetlint.json` as an artifact and fails at `fail-on` (default `error`). `pr` runs on scheduled and manually run pipelines and opens or updates a merge request: the onboarding configuration when the project has none, else the mechanical fixes of the default branch. The job token cannot push or open merge requests, so `pr` needs `FLEETLINT_TOKEN`, a project access token with the `api` and `write_repository` scopes and the Developer role, as a masked CI/CD variable. Both components take `stage`, `job-name`, `path`, `version` and `image` (an Alpine image, such as one from the dependency proxy).
+
+A component can only be included from the instance it is published on. On a self-managed instance include the template by URL, which takes the same inputs:
+
+```yaml
+include:
+  - remote: https://raw.githubusercontent.com/fleetlint/gitlab-components/0.8.1/templates/check.yml
+```
+
+The older job, `include: remote: https://raw.githubusercontent.com/fleetlint/fleetlint/<tag>/ci/gitlab/fleetlint.yml`, is the `check` component without inputs (variables `FLEETLINT_FAIL_ON`, `FLEETLINT_VERIFY`); before the release after 0.8.1 it fails on every run (the Code Quality step), so use the component.
 
 ## What the CI rules read
 
