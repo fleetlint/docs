@@ -8,13 +8,22 @@ description: "Install fleetlint, check a repository, fix what can be fixed."
 
 ## Install
 
+The quickest way on Linux and macOS is the install script. It needs only `curl`, `tar` and `sh`:
+
+```sh
+curl --proto '=https' --tlsv1.2 -fsSL https://fleetlint.org/install.sh | sh
+```
+
+It installs the latest release into `~/.local/bin` and says so when that directory is not on `PATH`. A version and a directory can be given: `curl ... | sh -s -- v0.9.0 ~/bin`. The script is served from this site and is the one of the release these pages describe; to read it first, `curl -fsSL https://fleetlint.org/install.sh | less`.
+
+With a package manager:
+
 ```sh
 brew install fleetlint/tap/fleetlint                    # macOS, Linux
 scoop bucket add fleetlint https://github.com/fleetlint/scoop-bucket
 scoop install fleetlint/fleetlint                       # Windows
 nix profile install github:fleetlint/nur#fleetlint     # Nix
 mise use github:fleetlint/fleetlint                     # mise
-curl --proto '=https' --tlsv1.2 -fsSL https://fleetlint.org/install.sh | sh   # to ~/.local/bin
 go install github.com/fleetlint/fleetlint/cmd/fleetlint@latest
 ```
 
