@@ -93,7 +93,7 @@ extends: [fleetlint:recommended]
 
 ## facts
 
-fleetlint detects these on every run; `fleetlint facts` prints them with where each came from. Pin one only when detection is wrong or when you are stating an intention.
+fleetlint detects these on every run; `fleetlint facts` prints them with where each came from. `init` writes the detected artifacts (and, under [`scopes`](#scopes), the stacks), so the file says what is checked; set the others only when detection is wrong or when you are stating an intention.
 
 | Fact | Values | Detected from |
 |---|---|---|
@@ -101,7 +101,7 @@ fleetlint detects these on every run; `fleetlint facts` prints them with where e
 | `visibility` | `public`, `private` | not detected by `check`; `init` asks the forge once and writes it |
 | `forge` | `github`, `gitea`, `gitlab` | the `origin` remote |
 | `container` | `none`, `devcontainer`, `docker`, `podman` | `devcontainer` when a devcontainer.json exists, else `none` |
-| `artifacts` | artifact kinds the catalog defines: `release-files`, `image`, `oci-artifact`, `helm-chart`, `npm`, `pypi`, `crate`, `gem`, `maven`, `nuget`, `pub`, `android-app`, `apple-app`; or `{kind, name, workflows}` naming one published artifact and the CI files that publish it | the workflows that publish each (`gh release create`, a build-push action with `push: true`, `npm publish`, ...), by the catalog's `artifacts/<kind>.yaml`, which names the instances of a kind where it can (an image reference, a chart path); `fleetlint facts` lists them. Pin it when a publish step hides in a reusable workflow, with the name and workflows so the release rules can read them; `artifacts: []` says nothing is published. The release capabilities are checked once per published artifact, and a finding names the one that fails |
+| `artifacts` | artifact kinds the catalog defines: `release-files`, `image`, `oci-artifact`, `helm-chart`, `npm`, `pypi`, `crate`, `gem`, `maven`, `nuget`, `pub`, `android-app`, `apple-app`; or `{kind, name, workflows}` naming one published artifact and the CI files that publish it | the workflows that publish each (`gh release create`, a build-push action with `push: true`, `npm publish`, ...), by the catalog's `artifacts/<kind>.yaml`, which names the instances of a kind where it can (an image reference, a chart path); `fleetlint facts` lists them. `init` writes what it detects here; add an entry when a publish step hides in a reusable workflow, with the name and workflows so the release rules can read them; `artifacts: []` says nothing is published. The list replaces detection, and `check` notes an artifact (or a workflow of a named one) detection finds beyond it; a kind without a name covers its instances. The release capabilities are checked once per published artifact, and a finding names the one that fails |
 
 `facts:` holds what applies to the whole repository. Stacks and the task runner are set per directory, under [`scopes`](#scopes).
 
@@ -113,7 +113,7 @@ The owner is detected but not set here: the file that names it is the place to c
 
 Parts of the repository that are checked as projects of their own, each with its own stacks. Workspace members (go.work, pnpm, package.json workspaces, Cargo, melos, Gradle) and top-level directories with their own manifest are found without configuration. Listing other paths under `scopes:` replaces that list; `scopes: []` turns it off.
 
-Each entry may pin what detection finds in its directory; nothing inherits it, so a member states its own stack:
+Each entry may pin what detection finds in its directory; nothing inherits it, so a member states its own stack. `init` writes the root and every member with the stacks it detected, so the file says which stack rules apply where; `check` notes a stack detection finds beyond a directory's list, so a stack added later is listed or left out knowingly:
 
 | Key | Values | Detected from |
 |---|---|---|
