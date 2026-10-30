@@ -60,7 +60,7 @@ fleetlint hierarchy                   # the catalogs of the run in the order the
 fleetlint init
 ```
 
-writes a `.fleetlint.yaml` that extends the `recommended` preset, with what was discovered as a comment. On GitHub, Gitea or GitLab it asks the forge once whether the repository is public and records the answer, because some rules apply to public repositories only. Nothing else is pinned: facts are detected again on every run.
+writes a `.fleetlint.yaml` that extends the `recommended` preset and lists what was detected and is checked: the stacks of the root and of each workspace member under `scopes:`, and what the release publishes under `facts.artifacts`, with the workflows that publish it. On GitHub, Gitea or GitLab it asks the forge once whether the repository is public and records the answer, because some rules apply to public repositories only. The lists replace detection, so the file says what fleetlint goes by; `fleetlint check` notes when detection finds a stack or an artifact the file does not list, so you can add it or leave it out knowingly. The task runner, the container and the other facts are detected again on every run.
 
 A repository without a remote and without releases is treated as an experiment (tier 3), which is asked for very little. Say what it is with `fleetlint init --tier 1` (production or public) or `--tier 2` (a tool you rely on).
 
