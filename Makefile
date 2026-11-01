@@ -9,7 +9,7 @@ SHELL := bash
 # renovate: datasource=github-releases depName=fleetlint/fleetlint
 FLEETLINT_VERSION ?= v0.10.0  # the release the generated pages come from
 # renovate: datasource=npm depName=pagefind
-PAGEFIND_VERSION  ?= 1.5.2
+PAGEFIND_VERSION  ?= 1.6.0
 SITE_URL          ?= https://fleetlint.org
 # content/ is next, the docs of the coming release; versions/vX.Y/ holds each released minor.
 # `make cut` releases next as the minor of FLEETLINT_VERSION: v0.5.0 -> versions/v0.5/.
