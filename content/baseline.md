@@ -65,7 +65,7 @@ The contract is the set of targets, not the tool. Two things are a choice, and b
 
 - **The task runner** (`facts.taskrunner`): `make`, `just`, `task`, package.json scripts or Gradle. The first one found is used; pin it when a repository has several, or to say which one `fix` should write. Rules read targets, dependencies and commands through the same model for every kind.
 - **Where the targets run** (`facts.container`):
-  - `none`: on the machine. The tools then have to be reproducible from the repository: a `tools` target that installs pinned versions, a version-manager file (`mise.toml`, `.tool-versions`), or a Nix flake or devenv.
+  - `none`: on the machine. The tools then have to be reproducible from the repository: a `tools` target that installs pinned versions, a version-manager file (`mise.toml`, `.tool-versions`), or a Nix environment with its lock file: a flake with `flake.lock`, devenv with `devenv.lock`, devbox with `devbox.lock`, or `shell.nix`.
   - `devcontainer`: in the repository's dev container. This is the default once a `devcontainer.json` exists.
   - `docker` or `podman`: in an image run with that engine, without a dev container definition.
 

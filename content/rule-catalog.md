@@ -28,8 +28,8 @@ Severity is the default; repositories may raise it freely and lower it with a re
 | `repo/gitattributes` | warning | all | recommended | `.gitattributes` with `* text=auto` |
 | `repo/readme-present` | warning | all | recommended | README with an install/quickstart section |
 | `repo/lockfile-committed` | error | 1, 2 | recommended | *capability*: the lockfile of each stack's dependency manager is tracked |
-| `repo/toolchain-pinned` | warning | 1, 2 | recommended | *capability*: each stack pins its compiler or runtime with a version (the stack's version file, or `.tool-versions`/`mise.toml` naming the tool); a JDK pin for Java and Kotlin |
-| `repo/dev-environment` | warning | 1, 2 | recommended | the tools are reproducible: in a container mode the container; on the machine a Nix flake or devenv, `mise.toml` / `.tool-versions`, or a `tools` target with pinned versions (outcome rule) |
+| `repo/toolchain-pinned` | warning | 1, 2 | recommended | *capability*: each stack pins its compiler or runtime with a version (the stack's version file, `.tool-versions`/`mise.toml` naming the tool, or `devbox.json` naming its package with a version); a JDK pin for Java and Kotlin |
+| `repo/dev-environment` | warning | 1, 2 | recommended | the tools are reproducible: in a container mode the container; on the machine a Nix flake, devenv or devbox with its lock file (or `shell.nix`), `mise.toml` / `.tool-versions`, or a `tools` target with pinned versions (outcome rule) |
 | `repo/codeowners` | info | 1 | recommended | `CODEOWNERS` in a recognised location |
 
 ## taskrunner: the task-runner contract
