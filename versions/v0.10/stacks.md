@@ -206,7 +206,7 @@ Detected by `composer.json`.
 
 A documentation or marketing site is a repository like any other: it has a build that can break, links that can rot and a deployment that should be reproducible. fleetlint recognises a site by `hugo.toml`/`hugo.yaml`/`hugo.json` (also under `config/_default/`), or a legacy `config.toml` naming the `baseURL` next to a `content/` directory.
 
-- **Toolchain:** pin Hugo (`mise.toml`, `.tool-versions`, or the version in the check workflow); the extended build when the site uses SCSS. The dev container uses the `hugo` feature; the `docker`/`podman` modes use `ghcr.io/gohugoio/hugo`.
+- **Toolchain:** pin Hugo (`mise.toml`, `.tool-versions`, `devbox.json`, or the version in the check workflow); the extended build when the site uses SCSS. The dev container uses the `hugo` feature; the `docker`/`podman` modes use `ghcr.io/gohugoio/hugo`.
 - **Build (`lint`):** `hugo --quiet --panicOnWarning --destination <tmp>`: a missing layout, a broken `ref`/`relref` or a deprecated setting fails the build instead of printing a warning. Checked by `lint/configured/hugo`.
 - **Tests:** a link and anchor check over the built site (every `href` resolves, every `#fragment` exists); `markdownlint` on the content. Hugo already fails on a link to a Markdown file that does not exist when `refLinksErrorLevel = "ERROR"`.
 - **Hooks:** the build check scoped to content, layouts, assets, static and configuration; `markdownlint --fix`.
