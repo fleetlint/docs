@@ -74,14 +74,15 @@ def main():
     rules = generated()
     caps = {r for r, v in rules.items() if v["kind"] == "capability"}
     impls = {r for r in rules if r.rsplit("/", 1)[0] in caps}
+    # A not-applicable implementation's short page has no Artifact row; its capability decides.
     by_artifact = {r.rsplit("/", 1)[0] for r in impls if rules[r]["artifact"]}
     top = set(rules) - impls
     totals = {
         "rules": len(top),
         "of which capabilities": len(caps),
         "of which keyed by artifact": len(by_artifact),
-        "implementations per stack (and `any`)": sum(1 for r in impls if not rules[r]["artifact"]),
-        "implementations per artifact kind": sum(1 for r in impls if rules[r]["artifact"]),
+        "implementations per stack (and `any`)": sum(1 for r in impls if r.rsplit("/", 1)[0] not in by_artifact),
+        "implementations per artifact kind": sum(1 for r in impls if r.rsplit("/", 1)[0] in by_artifact),
     }
 
     errors, seen = [], {}
