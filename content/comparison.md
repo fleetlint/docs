@@ -33,7 +33,7 @@ fleetlint covers that ground with its `repo/*` and `public/*` rules and goes fur
 
 [alint](https://alint.org) lints the shape of a repository's files with a large set of built-in rule kinds, facts evaluated once per run, shared configurations pinned by hash, a baseline for existing findings, nested configurations for monorepos and instructions for coding agents.
 
-fleetlint adopted several of those ideas and is built around others: rules as expressions over discovered facts instead of many rule kinds, outcome rules that accept several tools, exceptions with reasons and deadlines, tiers and public-only rules, layers for organisations and teams with locks and floors, and the fleet report. If the need is precise rules about file shape in one repository, alint is the more direct tool. If the need is one policy across many repositories with room for each to differ visibly, that is what fleetlint is for.
+fleetlint adopted several of those ideas and is built around others: rules as expressions over discovered facts instead of many rule kinds, outcome rules that accept several tools, exceptions with reasons and deadlines, tiers and public-only rules, catalogs for organisations and teams applied in order with locks and floors, and the fleet report. If the need is precise rules about file shape in one repository, alint is the more direct tool. If the need is one policy across many repositories with room for each to differ visibly, that is what fleetlint is for.
 
 ## What fleetlint is not
 
