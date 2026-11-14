@@ -8,19 +8,36 @@ description: "What the presets stand for: the practices behind the rules, and wh
 
 What the `fleetlint:*` presets stand for. Each section states the practice, then which rules check it. fleetlint checks how a repository is set up; the parts marked *review* are about the code itself and need a linter, a test or a reader. The per-stack tools are in [stacks.md](stacks.md).
 
+A rule marked as a [capability](writing-rules.md#capabilities-one-requirement-one-implementation-per-stack) has one implementation per stack, or for the release rules one per kind of published artifact; the [capability matrix](rules/capabilities.md) shows which exist.
+
 Tool names, flags and rule names reflect the tools as of 2026. Verify them against the installed version before writing configuration.
 
 ## Tiers
 
-Not every repository deserves everything. `facts.tier` selects how much applies; most rules name the tiers they apply to.
+Not every repository deserves everything. `facts.tier` selects how much applies: a rule that names tiers runs only at those, a rule that names none runs at every tier.
 
 | Tier | For | Applies |
 |---|---|---|
-| 1 | production or public | everything |
-| 2 | tools you rely on | hygiene, task runner, hooks, lint, tests on critical paths, security, dependencies |
-| 3 | experiments | secrets and junk kept out of git, a `.gitignore`, a README line saying it is an experiment |
+| 1 | production or public | every rule |
+| 2 | tools you rely on | hygiene, task runner, hooks, static analysis, a coverage floor, dependencies, the CI check and most CI safety rules. Left out: the rules for tier 1 only, such as release, documentation, action pinning, SAST and the license and unused-dependency checks |
+| 3 | experiments | only the rules that name no tier: secrets, junk and large files kept out of git, a `.gitignore`, `.editorconfig` and `.gitattributes`, a README, a license if public, and where they apply the container, tag, shell-script, `check` composition and slop rules and three CI rules (job timeouts, cancelled superseded runs, `pull_request_target`) |
 
-Promote a repository the day something starts depending on it.
+[What runs at each tier](rules/_index.md#what-runs-at-each-tier) lists the rules. Two consequences:
+
+- At tier 3 even `fleetlint:minimal` checks no hooks: `hooks/config-present` and `hooks/secret-scan` apply at tiers 1 and 2.
+- `repo/readme-present` runs at every tier and wants a README of at least 10 lines with a heading on installing, running or using the project. A one-line README saying "experiment" fails it.
+
+When neither `.fleetlint.yaml` nor the [fleet file](fleet.md) sets the tier, fleetlint infers it, and `fleetlint facts` names the fact that decided:
+
+| The repository | Tier |
+|---|---|
+| is public | 1 |
+| has a release pipeline: a GoReleaser configuration, a `cliff.toml`, or a workflow started by a tag | 1 |
+| has CI: GitHub, Gitea or Forgejo workflows, `.gitlab-ci.yml`, Woodpecker | 2 |
+| has tags | 2 |
+| none of these | 3 |
+
+Pin it with `facts: {tier: 2}` ([configuration](configuration.md#facts)). Promote a repository the day something starts depending on it.
 
 ## Hygiene
 
@@ -33,7 +50,7 @@ Promote a repository the day something starts depending on it.
 - The toolchain version is pinned in the repository, so every machine and CI build with the same compiler or runtime.
 - A `CODEOWNERS` file routes review requests for every path.
 
-Checked by: `repo/no-tracked-junk`, `repo/no-tracked-env`, `repo/gitignore-present`, `repo/no-large-files` in `fleetlint:minimal`; `repo/editorconfig`, `repo/gitattributes`, `repo/lockfile-committed`, `repo/toolchain-pinned`, `repo/codeowners`. The lockfile and toolchain rules are [capabilities](writing-rules.md#capabilities-one-requirement-one-implementation-per-stack): each stack checks them with its own files ([matrix](rules/capabilities.md)).
+Checked by: `repo/no-tracked-junk`, `repo/no-tracked-env`, `repo/gitignore-present`, `repo/no-large-files` in `fleetlint:minimal`; `repo/editorconfig`, `repo/gitattributes`, `repo/codeowners`; the capabilities `repo/lockfile-committed` and `repo/toolchain-pinned`, which each stack meets with its own files. `repo/editorconfig` and `repo/codeowners` check only that the file exists, `repo/gitattributes` that it sets `text=auto`.
 
 ## Slop
 
@@ -73,9 +90,11 @@ In a container mode, a target called outside the container runs inside it, and t
 
 `fleetlint fix` writes for the combination chosen: a Makefile, justfile or Taskfile, with the container switch when there is a container; hooks and a check workflow that call that runner; and for `devcontainer` the container itself. It never introduces a container or changes the runner on its own.
 
-The rules about tools accept alternatives the same way: each lists the known ways of meeting it (other scanners, another linter setup, `docker compose exec` instead of the devcontainer CLI), and a repository adds its own with `accept:`. A generated file belongs to the repository; editing it is expected, and tests in this project keep reasonable edits passing.
+The rules about tools accept alternatives the same way: each lists the known ways of meeting it (other scanners, another linter setup, `docker compose exec` instead of the devcontainer CLI), and a repository adds its own with `accept:`.
 
-Checked by: `repo/dev-environment`, `taskrunner/container`, `taskrunner/targets`, `taskrunner/check-composition`, `quality/check-passes` (with `--deep`), `quality/coverage-threshold`, `quality/policy-enforced`.
+A generated file belongs to the repository, and editing it is expected. fleetlint's own tests (`internal/engine/templates_test.go`) check that a repository set up from the templates passes the rules, also after typical edits.
+
+Checked by: `repo/dev-environment`, `taskrunner/container`, `taskrunner/targets`, `taskrunner/check-composition`, `quality/check-passes` (with `--deep`), `quality/policy-enforced`; the capability `quality/coverage-threshold`.
 
 ## Git hooks
 
@@ -91,7 +110,7 @@ Hooks run the project's own pinned tools through the task runner (`language: sys
 
 - Hook repositories are pinned to a version tag or a commit SHA, never a branch.
 
-Checked by: `hooks/config-present`, `hooks/secret-scan` in `fleetlint:minimal`; `hooks/shared-hygiene`, `hooks/conventional-commits`, `hooks/pre-push-check`, `hooks/revs-pinned`, `lint/shell`. The hook rules accept a `.pre-commit-config.yaml` (prek or pre-commit) or a lefthook configuration.
+Checked by: `hooks/config-present`, `hooks/secret-scan` in `fleetlint:minimal`; `hooks/shared-hygiene`, `hooks/conventional-commits`, `hooks/pre-push-check`, `hooks/revs-pinned`, `lint/shell`. The `hooks/*` rules apply at tiers 1 and 2 and accept a `.pre-commit-config.yaml` (prek or pre-commit) or a lefthook configuration, except `hooks/shared-hygiene` and `hooks/revs-pinned`, which read only `.pre-commit-config.yaml`.
 
 ## Static analysis
 
@@ -101,7 +120,23 @@ Each stack's strict linter and type-checker settings are in [stacks.md](stacks.m
 - A linter is configured, with the stack's required checks switched on.
 - Where the language has a separate type checker or strict compiler modes (TypeScript, Python, PHP, Dart), it runs in strict mode.
 
-Checked by four [capabilities](writing-rules.md#capabilities-one-requirement-one-implementation-per-stack), each implemented per stack (`lint/configured/go`, `types/strict/node`, ...; the [matrix](rules/capabilities.md) shows which stack has which): `format/configured`, `lint/configured`, `lint/strict`, `types/strict`; and `lint/shell`. They apply at tiers 1 and 2 and read configuration from parent directories too, so a workspace member inherits the root's. `fleetlint fix --apply` writes the configuration for every stack: `.golangci.yml`, `[tool.ruff]` and `[tool.mypy]` appended to pyproject.toml, `[lints]` appended to Cargo.toml, `eslint.config.mjs` plus the strict flags merged into tsconfig.json, `config/detekt/detekt.yml`, `analysis_options.yaml`, `config/checkstyle/checkstyle.xml`, `Directory.Build.props`, `.clang-tidy` and `.clang-format`, `.rubocop.yml`, `phpstan.neon.dist` and `.php-cs-fixer.dist.php`.
+Checked by: the capabilities `format/configured`, `lint/configured`, `lint/strict` and `types/strict`, each implemented per stack (`lint/configured/go`, `types/strict/node`, ...); and `lint/shell`. The capabilities apply at tiers 1 and 2 and read configuration from parent directories too, so a workspace member inherits the root's.
+
+`fleetlint fix --apply` writes the configuration for every stack:
+
+| Stack | Files |
+|---|---|
+| Go | `.golangci.yml` |
+| Python | `[tool.ruff]` and `[tool.mypy]` appended to pyproject.toml |
+| Rust | `[lints]` appended to Cargo.toml |
+| Node | `eslint.config.mjs`, and the strict flags merged into tsconfig.json |
+| Kotlin | `config/detekt/detekt.yml` |
+| Flutter | `analysis_options.yaml` |
+| Java | `config/checkstyle/checkstyle.xml` |
+| .NET | `Directory.Build.props` |
+| C/C++ | `.clang-tidy` and `.clang-format` |
+| Ruby | `.rubocop.yml` |
+| PHP | `phpstan.neon.dist` and `.php-cs-fixer.dist.php` |
 
 ## Tests
 
@@ -116,7 +151,7 @@ Checked by four [capabilities](writing-rules.md#capabilities-one-requirement-one
 - No tests without assertions, no skipped or focused tests committed, no expected values changed to match buggy output, no automatic retries to hide a flaky test.
 - Coverage is a floor, not a goal: at least 80% on changed lines, 90% on core logic. Mutation testing on core modules shows whether the tests would notice a bug.
 
-Checked by: `quality/coverage-threshold`, `quality/mutation-gate`; `slop/skipped-tests`, `slop/trivial-asserts` in `fleetlint:slop`.
+Checked by: the capabilities `quality/coverage-threshold` and `quality/mutation-gate`; `slop/skipped-tests`, `slop/trivial-asserts` in `fleetlint:slop`.
 
 ## Error handling
 
@@ -141,7 +176,7 @@ The heuristics `slop/swallowed-errors` and `slop/forced-unwraps` in `fleetlint:s
 - Wire and storage models are separate from domain models and mapped by validating parsers at the boundary.
 - No dead code, commented-out blocks, near-duplicate implementations with suffixes such as `V2` or `New`, pass-through layers, or `utils` dumping grounds.
 
-Checked by: `quality/duplication-gate` (a duplication detector runs). The rest is *review*.
+Checked by: the capability `quality/duplication-gate` (a duplication detector runs). The rest is *review*.
 
 ## Robustness
 
@@ -171,7 +206,7 @@ Checked by: `containers/dockerignore`, `containers/non-root-user`, `containers/b
 - No download is piped into a shell in CI or a Dockerfile; tools come from a pinned action, a package manager or a checksummed file.
 - A SAST tool (CodeQL, Semgrep, GitLab SAST, SonarQube) scans the code.
 
-Checked by: `repo/no-tracked-env`, `hooks/secret-scan` in `fleetlint:minimal`; `ci/least-privilege`, `ci/actions-pinned`, `ci/no-pull-request-target`, `ci/no-script-injection`, `ci/checkout-no-persist-credentials`, `ci/no-pipe-to-shell`, `ci/sast`, `hooks/revs-pinned`. The rest is *review*.
+Checked by: `repo/no-tracked-env`, `hooks/secret-scan` in `fleetlint:minimal`; `ci/least-privilege`, `ci/actions-pinned`, `ci/no-pull-request-target`, `ci/no-script-injection`, `ci/checkout-no-persist-credentials`, `ci/no-pipe-to-shell`, `hooks/revs-pinned`; the capability `ci/sast`. The rest is *review*.
 
 ## Dependencies
 
@@ -182,7 +217,7 @@ Checked by: `repo/no-tracked-env`, `hooks/secret-scan` in `fleetlint:minimal`; `
 - A new dependency has to beat about 100 lines of own code; check publisher, age and that the name is the package you meant.
 - A vendored or forked dependency is documented: upstream, base version, what changed and why.
 
-Checked by: `repo/lockfile-committed`, `deps/locked-install`, `deps/vulnerability-scan`, `deps/unused-check`, `deps/license-check` (capabilities, one implementation per stack, see the [matrix](rules/capabilities.md)); `deps/update-automation`, `deps/update-coverage`, `deps/update-cooldown`, `deps/install-scripts-disabled`, `deps/forks-documented`. Only a real invocation of a tool counts: an `echo`, a comment or an install line does not.
+Checked by: the capabilities `repo/lockfile-committed`, `deps/locked-install`, `deps/vulnerability-scan`, `deps/unused-check`, `deps/license-check` and `deps/forks-documented`; `deps/update-automation`, `deps/update-coverage`, `deps/update-cooldown`, `deps/install-scripts-disabled`. Only a real invocation of a tool counts: an `echo`, a comment or an install line does not.
 
 ## Logging
 
@@ -222,7 +257,7 @@ Checked by: `ci/check-workflow`, `ci/job-timeouts`, `ci/concurrency-cancel`, `ci
 - Libraries run the stack's API-compatibility check against the previous release.
 - Every release has a way back.
 
-Checked by: `changelog/generator-configured`, `release/tag-triggered`, `release/semver-tags`, `release/signed-tags`, `release/checksums`, `release/sbom`, `release/signing`, `release/provenance`, `release/changelog-in-release`, `release/trusted-publishing`, `release/hosted-builder`, `release/reproducible-build` (a capability), `release/api-compatibility`. A repository with its own pipeline passes when a known producer is present, or names its producer with `accept:`; see [writing-rules.md](writing-rules.md).
+Checked by: `changelog/generator-configured`, `release/tag-triggered`, `release/semver-tags`, `release/signed-tags`, `release/checksums`, `release/changelog-in-release`, `release/hosted-builder`; the capabilities keyed by published artifact `release/signing`, `release/sbom`, `release/provenance`, `release/trusted-publishing` and `release/reproducible-build`; the capability `release/api-compatibility`, per stack. A repository with its own pipeline passes when a known producer is present, or names its producer with `accept:`; see [writing-rules.md](writing-rules.md#outcome-rules-satisfiers-without-go).
 
 ## Public repositories
 
@@ -232,7 +267,7 @@ Checked by: `changelog/generator-configured`, `release/tag-triggered`, `release/
 - Issue and pull-request templates where the forge supports them.
 - No agent instruction files are tracked, and no commit carries an AI tool's address as author or co-author, or a "generated with" footer.
 
-Checked by: `public/license` in `fleetlint:minimal`; `public/manifest-license`, `public/security-policy`, `public/contributing`, `public/code-of-conduct`, `public/issue-templates` in `fleetlint:recommended`; `public/no-agent-files`, `public/no-ai-attribution` in `fleetlint:slop`. `fleetlint:oss` runs the recommended ones whatever the detected visibility.
+Checked by: `public/license` in `fleetlint:minimal`; `public/security-policy`, `public/contributing`, `public/code-of-conduct`, `public/issue-templates` and the capability `public/manifest-license` in `fleetlint:recommended`; `public/no-agent-files`, `public/no-ai-attribution` in `fleetlint:slop`. `fleetlint:oss` runs the recommended ones whatever the detected visibility.
 
 ## User interfaces
 

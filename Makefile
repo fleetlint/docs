@@ -33,8 +33,9 @@ INSTALL_SH := https://raw.githubusercontent.com/fleetlint/fleetlint/$(strip $(FL
 fmt: ## nothing to format: Markdown is written by hand, the generated pages by fleetlint
 	@true
 
-lint: ## the generated pages, the install script and the version config are current, and every version builds without warnings
+lint: ## the generated pages, the install script and the version config are current, the rule catalog matches the rule pages, and every version builds without warnings
 	fleetlint docs --out content --index-file _index.md --check
+	python3 scripts/check-rule-catalog.py content
 	curl --proto '=https' --tlsv1.2 -fsSL "$(INSTALL_SH)" | cmp -s - static/install.sh || { echo "static/install.sh is not the one of $(FLEETLINT_VERSION): run make gen"; exit 1; }
 	python3 scripts/versions.py check
 	rm -rf public
