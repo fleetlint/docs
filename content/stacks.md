@@ -149,7 +149,7 @@ Detected by `pom.xml`, or by a `build.gradle` or `build.gradle.kts` that names t
 - **Tests:** JUnit 5, AssertJ, Testcontainers for integration; Mockito only at boundaries. `surefire` for unit tests, `failsafe` for integration.
 - **Coverage:** JaCoCo with `<rule>` minimums in `jacoco-maven-plugin` (`check` goal) plus `diff-cover` on the XML report.
 - **Audit:** OWASP `dependency-check-maven` or `osv-scanner` on the dependency tree; `maven-dependency-plugin` `analyze` with `failOnWarning`, or the Gradle dependency-analysis plugin's `buildHealth` (unused dependencies); `gitleaks`.
-- **Licenses:** `license-maven-plugin` with `failOnBlacklist` (or `failOnNotWhitelisted`), the jk1 dependency-license-report plugin (`checkLicense` with an `allowedLicensesFile`) for Gradle, or `osv-scanner --licenses=<allowlist>`.
+- **Licenses:** `license-maven-plugin` with `failOnBlacklist` (or `failOnNotWhitelisted`), for Gradle the `app.cash.licensee` plugin or the jk1 dependency-license-report plugin (`checkLicense` with an `allowedLicensesFile`), or `osv-scanner --licenses=<allowlist>`.
 - **Slop guards:** Checkstyle `TodoComment` requiring an issue reference, `SuppressWarnings` forbidden without a reason filter; PMD CPD for duplication; Pitest for mutation testing.
 - **API compatibility (libraries):** `japicmp-maven-plugin` or Revapi against the previous release.
 - **Reproducible builds:** Maven `project.build.outputTimestamp`; Gradle `preserveFileTimestamps = false` and `reproducibleFileOrder = true` (the default from Gradle 9).
