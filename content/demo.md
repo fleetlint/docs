@@ -12,7 +12,7 @@ It is published at [fleetlint.org/demo/report/](/demo/report/) and rebuilt with 
 
 ```sh
 fleetlint fleet --from github:your-org --out report
-open report/index.html
+open report/index.html        # macOS; xdg-open on Linux
 ```
 
-The report is a directory of static files with no scripts; it can be read from a file share or published as it is.
+The report is a directory of static files that loads nothing from elsewhere; it can be read from a file share or published as it is. An inline script sorts the tables and filters the matrix; without it the report reads the same.

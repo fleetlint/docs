@@ -6,14 +6,14 @@ description: "The .fleetlint.yaml reference: catalogs, facts, scopes, rule overr
 
 # Configuration
 
-`.fleetlint.yaml` at the repository root (`fleetlint.yaml` is also accepted). Everything is optional, and the whole policy of a repository is in this one file. `fleetlint schema` prints its JSON Schema (`fleetlint schema catalog` and `fleetlint schema sources` those of catalog and sources files); [integrations](integrations.md#editors) shows how to get completion in an editor.
+`.fleetlint.yaml` at the repository root (`fleetlint.yaml` is also accepted). Only `version: 1` is required; everything else is optional, and the whole policy of a repository is in this one file. An unknown key is a configuration error (exit 2); [troubleshooting](troubleshooting.md) lists the common ones. `fleetlint schema` prints its JSON Schema (`fleetlint schema catalog` and `fleetlint schema sources` those of catalog and sources files); [integrations](integrations.md#editors) shows how to get completion in an editor.
 
+<!-- example: unchecked: names an example host -->
 ```yaml
 version: 1
-catalog: { version: v0.1.0 }        # the catalog version this repository runs with; one per run
+catalog: { version: v0.7.0 }        # the catalog version this repository runs with; one per run
 sources: git+https://git.example.com/org/standards.git//sources.yaml@<commit>   # the organisation's names, baseline and pin
-extends:
-  - fleetlint:slop                  # in addition to what the sources file extends
+extends:                            # in addition to what the sources file extends
   - team/platform                   # a name from the sources file
 overrides:                          # adjust rules the catalogs brought in
   hooks/pre-push-check: { enabled: false, reason: "CI runs the full check" }
@@ -22,7 +22,7 @@ overrides:                          # adjust rules the catalogs brought in
     accept:
       - { name: our-scanner, expr: 'text(taskrunner.file).contains("acme-scan")' }
 rules:                              # the repository's own rules, or library rules it selects
-  - use: slop/commented-out-code
+  - use: slop/commented-out-code    # one library rule, without the rest of fleetlint:slop
   - id: acme/owner-file
     kind: expr
     severity: error
@@ -49,46 +49,47 @@ The file has the same grammar as a catalog: `rules` defines or selects, `overrid
 
 ## extends
 
-The catalogs to apply, in order: a later one adjusts an earlier one within the earlier one's policy (locks, floors, forbidden exceptions only tighten). A catalog's includes apply before it. The sources file's `extends` comes before this list. Without the key, `fleetlint:recommended` is used.
+The catalogs to apply, in order: a later one adjusts an earlier one within the earlier one's policy (locks, floors, forbidden exceptions only tighten). A catalog's includes apply before it. The sources file's `extends` comes before this list. When neither this list nor the sources file's `extends` names a catalog, `fleetlint:recommended` is used.
 
 | Reference | Meaning |
 |---|---|
 | `fleetlint:minimal`, `fleetlint:recommended`, `fleetlint:strict`, `fleetlint:oss`, `fleetlint:slop` | a preset of the catalog built into the binary (or of the pinned version, see below) |
 | a path | a catalog file, or a directory of them, inside the repository; an absolute path, `..` or a symlink out of it is refused |
-| `https://…#sha256-<digest>` | a catalog over https; the digest is required |
-| `git+<url>//<path>@<tag or commit>` | a file in a git repository; a tag additionally needs `#sha256-<digest>`, a full commit SHA does not |
+| `https://…#sha256-<digest>` | a catalog over https; the digest is required, and `fleetlint catalog digest <file>` prints it |
+| `git+<url>//<path>@<tag or commit>` | a file in a git repository; a tag additionally needs `#sha256-<digest>`, a full commit SHA does not. Only a tree pinned to a full commit SHA brings the catalog's `rules/` and `templates/` |
 | `oci://<registry>/<repository>:<tag>` or `@sha256:<digest>` | a catalog artifact in a container registry, signed with cosign; a tag needs `signers` in a sources file, see [organisations](organisations.md#catalogs-from-a-registry-oci-signatures-private-templates) |
 | `org`, `team/<name>` | a name from a `sources` file, see [organisations](organisations.md) |
 
-The presets build on each other: `minimal` holds the rules no repository should fail (nothing secret, accidental or oversized tracked, no conflict markers, hooks with a secret scan, a license in public repositories); `recommended` (the default) adds the task-runner contract, hooks, formatter, linter and type-checker configuration, dependencies, CI and release checks; `strict` is `recommended` with every warning an error, every informational rule a warning, and no exceptions on the security rules; `oss` is `recommended` with its `public/*` rules switched on whatever the detected visibility, for repositories that are about to be published or live on a forge without a visibility API; `slop` is an add-on with the heuristic `slop/*` rules and, for public repositories, `public/no-agent-files` and `public/no-ai-attribution` (see [slop](slop.md)). The [rule catalog](rule-catalog.md) lists which preset selects each rule.
+The presets build on each other: `minimal` holds the rules no repository should fail (nothing secret, accidental or oversized tracked, no conflict markers, from tier 2 hooks with a secret scan, a license in public repositories); `recommended` (the default) adds the task-runner contract, hooks, formatter, linter and type-checker configuration, dependencies, CI and release checks; `strict` is `recommended` with every warning an error, every informational rule a warning, and the security rules closed to exceptions and to disabling; `oss` is `recommended` with its `public/*` rules switched on whatever the detected visibility, for repositories that are about to be published or live on a forge without a visibility API; `slop` is an add-on with the heuristic `slop/*` rules and, for public repositories, `public/no-agent-files` and `public/no-ai-attribution` (see [slop](slop.md)). The [rule catalog](rule-catalog.md) lists which preset selects each rule.
 
-Catalogs referenced by https or git are fetched on every run. Presets need no network.
+Catalogs referenced by https, git or `oci://` are fetched on every run, hooks included; presets need no network. A catalog that cannot be fetched is a configuration error (exit 2), so a hook fails offline too.
 
 ## catalog
 
 Every binary carries one version of the catalog; `fleetlint version` names it, and `fleetlint catalog version` shows the version a repository runs with and each catalog it loads. A run uses exactly one version — for the presets, the rule library, and the fix templates — and every catalog in the run must build on that version:
 
+<!-- example: unchecked: fleetlint v0.10.2 leaves stacks/ and artifacts/ out of a version pin; remove this marker with the fix -->
 ```yaml
 version: 1
 catalog:
-  version: v0.1.0          # a tag or a full commit SHA of the catalog repository
+  version: v0.7.0          # a tag or a full commit SHA of the catalog repository
   # repo: git@github.com:acme/fleetlint-catalog.git   # a fork; default is the fleetlint project's
 extends: [fleetlint:recommended]
 ```
 
 - Without `catalog:` the built-in version runs. A sources file may set the pin for every repository that uses it; a repository may repeat it, not change it (a different pin is an error).
 - An organisation or team catalog states in its `metadata.catalog` which version it builds on. If that is not the run's version, the run fails with both versions named; this is what makes the catalog mean the same rules in every repository.
-- The version is fetched once with git, using the credentials git already has, and kept in the user's cache directory (`FLEETLINT_CACHE_DIR` overrides the location, for CI). Later runs, hooks included, read the cache and need no network.
+- A `version` pin is fetched once with git, using the credentials git already has, and kept in the user's cache directory (`FLEETLINT_CACHE_DIR` overrides the location, for CI). Later runs, hooks included, read the cache and need no network.
 - A commit SHA cannot move. A tag can; the report shows the commit a tag resolved to when it was fetched.
 - The same version also comes from a registry: every catalog tag is published as a signed OCI artifact holding the whole catalog (presets, rules, stacks, templates, renamed ids). Pin it instead of the git tag where git access is awkward or a registry is the trusted source:
 
   ```yaml
   catalog:
-    oci: ghcr.io/fleetlint/catalog:v0.1.0      # or ...:v0.1.0@sha256:<digest> to pin the content
+    oci: ghcr.io/fleetlint/catalog:v0.7.0      # or ...:v0.7.0@sha256:<digest> to pin the content
   extends: [fleetlint:recommended]
   ```
 
-  A tag of `ghcr.io/fleetlint/catalog` is verified against the signature of the catalog repository's publish workflow; a mirror or a fork at a tag needs `signers` in the sources file; a `@sha256:` digest needs neither. `oci` names the version on its own (no `version` or `repo` next to it), and `ghcr.io/fleetlint/catalog:v0.1.0` is the same version as the git tag `v0.1.0` for every catalog that builds on it. The artifact is read once per run.
+  A tag of `ghcr.io/fleetlint/catalog` is verified against the signature of the catalog repository's publish workflow; a mirror or a fork at a tag needs `signers` in the sources file; a `@sha256:` digest needs neither. `oci` names the version on its own (no `version` or `repo` next to it), and `ghcr.io/fleetlint/catalog:v0.7.0` is the same version as the git tag `v0.7.0` for every catalog that builds on it. An `oci` pin is not cached: the artifact is fetched from the registry on every run, hooks included.
 - A catalog states the engine level it was written for (`metadata.engine`). A version this binary cannot run is refused with one message that says whether to upgrade fleetlint or choose another catalog version, instead of rules failing one by one.
 
 ## facts
@@ -97,13 +98,29 @@ fleetlint detects these on every run; `fleetlint facts` prints them with where e
 
 | Fact | Values | Detected from |
 |---|---|---|
-| `tier` | `1` production or public, `2` a tool you rely on, `3` an experiment | inferred: public or has a release pipeline: 1; CI or tags: 2; otherwise 3 (`default`). A scope whose tier nobody sets takes the repository's when that is more serious, since workflows and releases live at the root. `fleetlint facts` and every report say which fact decided |
-| `visibility` | `public`, `private` | not detected by `check`; `init` asks the forge once and writes it |
-| `forge` | `github`, `gitea`, `gitlab` | the `origin` remote |
+| `tier` | `1` production or public, `2` a tool you rely on, `3` an experiment | inferred: public or has a release pipeline (a GoReleaser config, `cliff.toml`, a workflow run on tags): 1; CI or tags: 2; otherwise 3 (`default`). A scope whose tier nobody sets takes the repository's when that is more serious, since workflows and releases live at the root. `fleetlint facts` and every report say which fact decided |
+| `visibility` | `public`, `private`, `unknown` | `git config agent.public true` or `false` in the checkout; else `unknown`. `init` asks the forge once and writes it here; fleet mode asks the forge when neither the fleet file nor this file says |
+| `forge` | `github`, `gitea`, `gitlab`, `unknown` | the host of the `origin` remote: github.com or a host with `github` in its name is `github`, a host with `gitlab` in its name `gitlab`, any other host `gitea` (Forgejo, Codeberg); no remote is `unknown`. Pin it for GitHub Enterprise or GitLab on another hostname |
 | `container` | `none`, `devcontainer`, `docker`, `podman` | `devcontainer` when a devcontainer.json exists, else `none` |
-| `artifacts` | artifact kinds the catalog defines: `release-files`, `image`, `oci-artifact`, `helm-chart`, `npm`, `pypi`, `crate`, `gem`, `maven`, `nuget`, `pub`, `android-app`, `apple-app`; or `{kind, name, workflows}` naming one published artifact and the CI files that publish it | the workflows that publish each (`gh release create`, a build-push action with `push: true`, `npm publish`, ...), by the catalog's `artifacts/<kind>.yaml`, which names the instances of a kind where it can (an image reference, a chart path); `fleetlint facts` lists them. `init` writes what it detects here; add an entry when a publish step hides in a reusable workflow, with the name and workflows so the release rules can read them; `artifacts: []` says nothing is published. The list replaces detection, and `check` notes an artifact (or a workflow of a named one) detection finds beyond it; a kind without a name covers its instances. The release capabilities are checked once per published artifact, and a finding names the one that fails |
+| `artifacts` | artifact kinds the catalog defines: `release-files`, `image`, `oci-artifact`, `helm-chart`, `npm`, `pypi`, `crate`, `gem`, `maven`, `nuget`, `pub`, `android-app`, `apple-app`; or `{kind, name, workflows}` | the workflows that publish each, by the catalog's `artifacts/<kind>.yaml`; see [below](#artifacts) |
 
 `facts:` holds what applies to the whole repository. Stacks and the task runner are set per directory, under [`scopes`](#scopes).
+
+### artifacts
+
+```yaml
+version: 1
+facts:
+  artifacts:
+    - release-files
+    - { kind: image, name: ghcr.io/acme/api, workflows: [.github/workflows/release.yml] }
+```
+
+- Detection reads the workflows that publish (`gh release create`, a build-push action with `push: true`, `npm publish`, ...); the catalog's `artifacts/<kind>.yaml` says what counts and names the instances of a kind where it can (an image reference, a chart path). `fleetlint facts` lists them.
+- `init` writes what it detects. Add an entry when a publish step hides in a reusable workflow, with the name and workflows so the release rules can read them.
+- A kind without a name covers its instances. `artifacts: []` says nothing is published.
+- The list replaces detection. `check` notes an artifact, or a workflow of a named one, that detection finds beyond it.
+- The release capabilities are checked once per published artifact, and a finding names the one that fails.
 
 The owner is detected but not set here: the file that names it is the place to change it. `fleetlint facts` shows it as `owner` with the file it came from. Backstage's `catalog-info.yaml` wins with `spec.owner` (`group:default/payments` and `payments` are both `payments`; another namespace stays, `group:ops/payments` is `ops/payments`). Without it, the CODEOWNERS default owner counts: the first owner of the last rule for every file (`*`, `/*`, `**` or `/**`), without its `@`, from `.github/CODEOWNERS`, `CODEOWNERS`, `docs/CODEOWNERS`, `.gitea/CODEOWNERS` or `.gitlab/CODEOWNERS`, the first that exists; GitLab sections are skipped. Nothing asks the forge. In fleet mode the owner is the repository's team unless its fleet file entry names one ([fleet](fleet.md)).
 
@@ -120,10 +137,28 @@ Each entry may pin what detection finds in its directory; nothing inherits it, s
 | `path` | a directory relative to the root; `.` is the root itself | |
 | `stacks` | a stack the catalog defines in `stacks/`: `go`, `python`, `rust`, `node`, `kotlin`, `flutter`, `java`, `dotnet`, `cpp`, `ruby`, `php`, `hugo` in the fleetlint catalog | the stack definitions' markers in the directory, see [stacks](writing-rules.md#stacks) |
 | `taskrunner` | `make`, `just`, `task`, `npm-scripts`, `gradle` | the first of Makefile, justfile, Taskfile, Gradle, package.json scripts |
+| `overrides` | as under [overrides](#overrides), for this directory only; no policy | |
+| `exceptions` | as under [exceptions](#exceptions), for this directory only | |
+
+```yaml
+version: 1
+scopes:
+  - path: .
+    stacks: [go]
+  - path: web
+    stacks: [node]
+    taskrunner: npm-scripts
+    overrides:
+      types/strict: { enabled: false, reason: "plain JavaScript, no type checker" }
+    exceptions:
+      - rule: quality/coverage-threshold/node
+        reason: "UI code; the end-to-end suite covers it"
+        until: 2027-06-30
+```
 
 `path: .` pins the root and adds no scope: listed alone, members are still discovered. Set `taskrunner` when a directory has more than one runner, or to say which one `fix` should write. A stack name the catalog does not define is a configuration error.
 
-Before 0.3, `facts.stacks` and `facts.taskrunner` applied to every scope and a scope wrote `facts: {stacks: [...]}`. Both are still read in 0.3 with a deprecation warning: `facts.stacks` and `facts.taskrunner` pin the root only, and a scope's `facts.stacks` is read as its `stacks`.
+Before 0.3, `facts.stacks` and `facts.taskrunner` applied to every scope and a scope wrote `facts: {stacks: [...]}`. Both are still read, with a deprecation warning on stderr, and will be removed: `facts.stacks` and `facts.taskrunner` pin the root only, and a scope's `facts.stacks` is read as its `stacks`.
 
 ### Nested configuration
 
@@ -136,9 +171,8 @@ overrides:
   lint/strict/go: { enabled: false, reason: "generated client, linted where it is generated" }
   taskrunner/targets: { severity: warning, reason: "a prototype" }
 exceptions:
-  - rule: repo/no-tracked-junk
-    match: "testdata/*.log"
-    reason: "parser fixtures"
+  - rule: quality/coverage-threshold/go
+    reason: "generated client, tested through the service that uses it"
 ```
 
 It applies to that scope only and may override facts, adjust rules (disable with a reason, change severity, set params, add accepts) and add exceptions. It cannot extend catalogs or define rules; those belong in the root file, so there is one place where policy is resolved. Nested exceptions are reported alongside the root's and appear in the fleet policy notes.
@@ -149,13 +183,13 @@ Adjustments to rules the catalogs brought in, keyed by rule id or by a pattern o
 
 | Key | Effect |
 |---|---|
-| `enabled: false` | turns the rule off; needs a `reason`. Refused for a rule a catalog locked or gave a severity floor |
-| `severity` | `error`, `warning` or `info`; lowering it needs a `reason` and stays above a catalog's floor |
+| `enabled: false` | turns the rule off; needs a `reason`. Refused for a rule a catalog locked, gave a severity floor or set to `exceptions: false` |
+| `severity` | `error`, `warning` or `info`; lowering it needs a `reason` and may not go below a catalog's floor |
 | `raise` | lift the severity that many steps instead, capped at error |
 | `params` | the rule's parameters, as its page in the [rule reference](rules/_index.md) lists them |
 | `accept` | for outcome rules: further ways of meeting the requirement, each a `name` and an `expr` |
 
-Disabled rules and lowered severities are listed in every report with their reason. The policy keys (`locked`, `min_severity`, `exceptions`) and the applicability keys (`when`, `tiers`) belong to catalogs; the repository adjusts, it does not set policy. A rule a catalog locked cannot be disabled, lowered or reshaped (`params`, `accept`) here; see [how rules combine](composition.md).
+Disabled rules and lowered severities are listed in every report with their reason. The policy keys (`locked`, `min_severity`, `exceptions`) and the applicability keys (`when`, `tiers`) belong to catalogs; the repository adjusts, it does not set policy. A rule a catalog locked cannot be disabled, lowered or reshaped (`params`, `accept`) here, and one a catalog set to `exceptions: false` can be neither excepted nor disabled; see [how rules combine](composition.md).
 
 ## rules
 
@@ -190,7 +224,7 @@ A catalog's `exception_policy` can require `until` and `approved_by` and cap how
 
 ## Baseline
 
-`fleetlint baseline` writes `.fleetlint-baseline.json` with a fingerprint (rule, scope, path, message, and the artifact's name for a finding about a named artifact) of every current finding. Where a report points (a rule's `locate`) is not part of it. From then on those findings report as *baselined* instead of failing, so `fleetlint check` is green today and fails only on findings that are new. Two findings with the same fingerprint (the same message on the same file) are two entries, so a third copy is new and fails.
+`fleetlint baseline` writes `.fleetlint-baseline.json` (`baseline:` in the configuration names another file) with a fingerprint (rule, scope, path, message, and the artifact's name for a finding about a named artifact) of every current finding. Where a report points (a rule's `locate`) is not part of it. From then on those findings report as *baselined* instead of failing, so `fleetlint check` is green today and fails only on findings that are new. Two findings with the same fingerprint (the same message on the same file) are two entries, so a third copy is new and fails.
 
 The file can only shrink. Re-running `fleetlint baseline` drops entries that no longer match and refuses to add new ones; the report says how many entries are "paid off" after each run. `--reset` starts over and grandfathers everything, which is a deliberate act you should see in a diff. Commit the file; a pull request that grows it is a pull request that weakens the policy.
 
@@ -199,9 +233,6 @@ Since 0.8 a release finding about a named artifact (an image, a chart, an OCI ar
 Baselined findings do not count towards compliance in fleet mode: they are acknowledged debt, listed separately, not success.
 
 A baseline and an exception are different tools: an exception is a reasoned, visible acceptance of a specific finding, optionally with a deadline; a baseline is unexplained legacy that is expected to go away.
-
-
-`baseline:` in the configuration names another file than `.fleetlint-baseline.json`.
 
 ## sources
 

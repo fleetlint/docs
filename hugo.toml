@@ -24,6 +24,12 @@ disableKinds = ["taxonomy", "term", "RSS"]
   weight = 10
 
 [[menu.main]]
+  name = "Troubleshooting"
+  identifier = "troubleshooting"
+  pageRef = "/troubleshooting"
+  weight = 11
+
+[[menu.main]]
   name = "Concepts"
   identifier = "concepts"
   weight = 20

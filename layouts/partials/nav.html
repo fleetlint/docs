@@ -1,10 +1,10 @@
 <nav class="side" aria-label="Documentation">
   {{- $current := . -}}
-  {{- define "partials/nav-link.html" }}
+  {{- define "partials/nav-link.html" }}{{ with $.entry.URL }}{{/* empty when this version lacks the page */}}
     {{- $active := or ($.current.IsMenuCurrent "main" $.entry) ($.current.HasMenuCurrent "main" $.entry) -}}
     {{- with $.entry.Page }}{{ if and (eq $.current.Section .Section) (ne .Section "") (eq .Kind "section") }}{{ $active = true }}{{ end }}{{ end }}
     <li><a href="{{ $.entry.URL }}"{{ if $active }} aria-current="page"{{ end }}>{{ $.entry.Name }}</a></li>
-  {{- end }}
+  {{- end }}{{ end }}
   <ul>
   {{- range site.Menus.main }}
     {{- if .HasChildren }}

@@ -5,7 +5,7 @@ description: "Policy for a fleet of repositories."
 
 # fleetlint
 
-Policy for a fleet of repositories. fleetlint checks how a repository is set up (hooks, task runner, lint configuration, CI on GitHub, Gitea, Forgejo or GitLab, release pipeline) against a catalog of rules, reports how far it is from compliant, and tells you or your coding agent exactly how to close each gap.
+Policy for a fleet of repositories. fleetlint checks how a repository is set up (hooks, task runner, lint configuration, CI on GitHub, Gitea, Forgejo or GitLab, release pipeline) against a catalog of rules, reports how far it is from compliant, and tells you or your coding agent how to close each gap.
 
 It does not lint code. It checks that the things which lint, test, build and release the code are present, wired together and configured the way you decided they should be, in every repository, the same way.
 
