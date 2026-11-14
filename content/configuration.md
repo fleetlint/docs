@@ -68,7 +68,6 @@ Catalogs referenced by https, git or `oci://` are fetched on every run, hooks in
 
 Every binary carries one version of the catalog; `fleetlint version` names it, and `fleetlint catalog version` shows the version a repository runs with and each catalog it loads. A run uses exactly one version — for the presets, the rule library, and the fix templates — and every catalog in the run must build on that version:
 
-<!-- example: unchecked: fleetlint v0.10.2 leaves stacks/ and artifacts/ out of a version pin; remove this marker with the fix -->
 ```yaml
 version: 1
 catalog:
