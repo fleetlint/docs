@@ -31,7 +31,7 @@ metadata:
   version: 1.0.0
   engine: 7
   label: org                          # who owns it; reports attribute by it
-  catalog: { version: v0.7.0 }        # the fleetlint catalog it builds on
+  catalog: { version: v0.8.0 }        # the fleetlint catalog it builds on
   includes: ["fleetlint:recommended"]
 rules:
   - use: deps/unused-check            # with the Ruby implementation from rules/
@@ -67,7 +67,7 @@ satisfiers:
 ```yaml
 # sources.yaml
 version: 1
-catalog: { version: v0.7.0 }          # the fleetlint catalog every repository runs
+catalog: { version: v0.8.0 }          # the fleetlint catalog every repository runs
 extends: [org]                        # the baseline every repository gets
 catalogs:
   org: git+https://git.example.com/platform/standards.git//org/catalog.yaml@<commit>
@@ -139,7 +139,7 @@ metadata:
   name: acme-baseline
   version: 1.1.0
   engine: 7
-  catalog: { version: v0.7.0 }
+  catalog: { version: v0.8.0 }
   includes: ["fleetlint:recommended"]
 overrides:
   repo/no-tracked-env:     { locked: true, exceptions: false }
@@ -259,7 +259,7 @@ Repositories should not carry URLs and pins for every catalog. An organisation p
 ```yaml
 # sources.yaml
 version: 1
-catalog: { version: v0.7.0 }         # the fleetlint catalog version every repository runs (or {oci: ghcr.io/fleetlint/catalog:v0.7.0})
+catalog: { version: v0.8.0 }         # the fleetlint catalog version every repository runs (or {oci: ghcr.io/fleetlint/catalog:v0.8.0})
 extends: [fleetlint:recommended, org, compliance/pci] # the baseline every repository gets, in this order, before its own extends
 catalogs:
   org: git+https://git.example.com/platform/standards.git//org/catalog.yaml@<commit>

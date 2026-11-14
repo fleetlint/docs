@@ -63,10 +63,10 @@ Every rule needs `kind` (`expr` for an expression rule) and `severity`. A rule i
 ### The catalog builds on another catalog version
 
 ```text
-fleetlint: catalog policy/acme.yaml builds on catalog v0.6.0; this run uses the built-in catalog (v0.7.0). Pin that version in .fleetlint.yaml (catalog:) or in the sources file so every repository runs the same rules
+fleetlint: catalog policy/acme.yaml builds on catalog v0.7.0; this run uses the built-in catalog (v0.8.0). Pin that version in .fleetlint.yaml (catalog:) or in the sources file so every repository runs the same rules
 ```
 
-A run uses one catalog version, and every catalog's `metadata.catalog` must name it. Either pin the version the catalog names (`catalog: { version: v0.6.0 }` in `.fleetlint.yaml` or the sources file), or move the catalog to the version the run uses. `metadata.catalog` is a mapping, `catalog: { version: v0.7.0 }`; the plain string `catalog: v0.7.0` fails with `string was used where mapping is expected`.
+A run uses one catalog version, and every catalog's `metadata.catalog` must name it. Either pin the version the catalog names (`catalog: { version: v0.7.0 }` in `.fleetlint.yaml` or the sources file), or move the catalog to the version the run uses. `metadata.catalog` is a mapping, `catalog: { version: v0.8.0 }`; the plain string `catalog: v0.8.0` fails with `string was used where mapping is expected`.
 
 ### The catalog needs a newer fleetlint
 

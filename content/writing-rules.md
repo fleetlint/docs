@@ -146,7 +146,7 @@ A rule that does not load stops the run before any rule is checked, with exit 2 
 | `locate: … undeclared reference to 'docs'` | `locate: docs/RUNBOOK.md` is CEL; a fixed path needs inner quotes: `'"docs/RUNBOOK.md"'` |
 | `expr: … undeclared reference to 'fiel' (did you mean 'file'?)` | a typo in an expression; every expression is type-checked when the configuration loads |
 | `expr: … result must be bool, got string` | `expr`, `when` and satisfiers must yield a bool |
-| `catalog ./acme.yaml builds on catalog v0.6.0; this run uses the built-in catalog (v0.7.0)` | `metadata.catalog` names another version than the run uses: pin it in `.fleetlint.yaml` or the sources file, or update the catalog |
+| `catalog ./acme.yaml builds on catalog v0.7.0; this run uses the built-in catalog (v0.8.0)` | `metadata.catalog` names another version than the run uses: pin it in `.fleetlint.yaml` or the sources file, or update the catalog |
 | `include "org" must be a preset, an https URL or a git reference` | a remote catalog includes others by pinned reference; sources-file names work in `extends` only |
 | `… set a severity floor of warning; off is below every floor` | a rule with a floor cannot be disabled |
 | `rule <id>: a capability belongs in a catalog's rules/ library` | `kind: capability` in a rules list |
@@ -167,7 +167,7 @@ metadata:
   version: 1.2.0
   engine: 7                           # the engine level the catalog is written for
   label: org                          # who owns it; reports attribute by it (default: the sources-file name, else the name)
-  catalog: { version: v0.7.0 }        # the fleetlint catalog includes and `use:` come from; a remote catalog that uses either must state it
+  catalog: { version: v0.8.0 }        # the fleetlint catalog includes and `use:` come from; a remote catalog that uses either must state it
   includes: [fleetlint:minimal]       # optional; loaded first
 rules:
   - use: release/*                    # select library rules: an id, or a family with /*
@@ -597,4 +597,4 @@ The level counts the changes to what rules can rely on (facts, functions, fix ac
 | 6 | 0.7.0 | `refs` entries as `{url, kind, section}` |
 | 7 | 0.8.0 | published artifacts as named instances (`instances:`, `artifact` in implementations, `facts.artifacts` entries with a name, `find` and `findall`) and `locate:` on rules. `combine:` left the format: `combine: any` let one passing implementation carry the others, and a catalog written for an earlier level still runs with it. `artifact_workflows(kind)`, which read every workflow of the kind even inside an implementation meant to check one artifact, is refused in a catalog written for level 7. |
 
-The presets carry no `metadata.version`: they take the version of the catalog release they ship in (its tag, or the commit for an untagged build), so a report names `fleetlint-recommended@v0.7.0`. Every other catalog states its version.
+The presets carry no `metadata.version`: they take the version of the catalog release they ship in (its tag, or the commit for an untagged build), so a report names `fleetlint-recommended@v0.8.0`. Every other catalog states its version.

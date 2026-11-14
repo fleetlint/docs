@@ -11,7 +11,7 @@ description: "The .fleetlint.yaml reference: catalogs, facts, scopes, rule overr
 <!-- example: unchecked: names an example host -->
 ```yaml
 version: 1
-catalog: { version: v0.7.0 }        # the catalog version this repository runs with; one per run
+catalog: { version: v0.8.0 }        # the catalog version this repository runs with; one per run
 sources: git+https://git.example.com/org/standards.git//sources.yaml@<commit>   # the organisation's names, baseline and pin
 extends:                            # in addition to what the sources file extends
   - team/platform                   # a name from the sources file
@@ -71,7 +71,7 @@ Every binary carries one version of the catalog; `fleetlint version` names it, a
 ```yaml
 version: 1
 catalog:
-  version: v0.7.0          # a tag or a full commit SHA of the catalog repository
+  version: v0.8.0          # a tag or a full commit SHA of the catalog repository
   # repo: git@github.com:acme/fleetlint-catalog.git   # a fork; default is the fleetlint project's
 extends: [fleetlint:recommended]
 ```
@@ -84,11 +84,11 @@ extends: [fleetlint:recommended]
 
   ```yaml
   catalog:
-    oci: ghcr.io/fleetlint/catalog:v0.7.0      # or ...:v0.7.0@sha256:<digest> to pin the content
+    oci: ghcr.io/fleetlint/catalog:v0.8.0      # or ...:v0.8.0@sha256:<digest> to pin the content
   extends: [fleetlint:recommended]
   ```
 
-  A tag of `ghcr.io/fleetlint/catalog` is verified against the signature of the catalog repository's publish workflow; a mirror or a fork at a tag needs `signers` in the sources file; a `@sha256:` digest needs neither. `oci` names the version on its own (no `version` or `repo` next to it), and `ghcr.io/fleetlint/catalog:v0.7.0` is the same version as the git tag `v0.7.0` for every catalog that builds on it. An `oci` pin is not cached: the artifact is fetched from the registry on every run, hooks included.
+  A tag of `ghcr.io/fleetlint/catalog` is verified against the signature of the catalog repository's publish workflow; a mirror or a fork at a tag needs `signers` in the sources file; a `@sha256:` digest needs neither. `oci` names the version on its own (no `version` or `repo` next to it), and `ghcr.io/fleetlint/catalog:v0.8.0` is the same version as the git tag `v0.8.0` for every catalog that builds on it. An `oci` pin is not cached: the artifact is fetched from the registry on every run, hooks included.
 - A catalog states the engine level it was written for (`metadata.engine`). A version this binary cannot run is refused with one message that says whether to upgrade fleetlint or choose another catalog version, instead of rules failing one by one.
 
 ## facts
