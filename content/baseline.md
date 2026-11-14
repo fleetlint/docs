@@ -257,7 +257,7 @@ Checked by: `ci/check-workflow`, `ci/job-timeouts`, `ci/concurrency-cancel`, `ci
 - Libraries run the stack's API-compatibility check against the previous release.
 - Every release has a way back.
 
-Checked by: `changelog/generator-configured`, `release/tag-triggered`, `release/semver-tags`, `release/signed-tags`, `release/checksums`, `release/changelog-in-release`, `release/hosted-builder`; the capabilities keyed by published artifact `release/signing`, `release/sbom`, `release/provenance`, `release/trusted-publishing` and `release/reproducible-build`; the capability `release/api-compatibility`, per stack. A repository with its own pipeline passes when a known producer is present, or names its producer with `accept:`; see [writing-rules.md](writing-rules.md#outcome-rules-satisfiers-without-go).
+Checked by: `changelog/generator-configured`, `release/tag-triggered`, `release/semver-tags`, `release/signed-tags`, `release/checksums`, `release/changelog-in-release`, `release/hosted-builder`; the capabilities keyed by published artifact `release/signing`, `release/sbom`, `release/provenance`, `release/trusted-publishing` and `release/reproducible-build`; the capability `release/api-compatibility`, per stack. A repository with its own pipeline passes when a known producer is present, or names its producer with `accept:`; see [writing rules](writing-rules.md#outcome-rules-satisfiers-partials-and-accept).
 
 ## Public repositories
 

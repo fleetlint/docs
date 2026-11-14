@@ -25,7 +25,7 @@ The rules the `fleetlint:*` presets ship, grouped by family, with a one-line sum
 **Kind** says how the rule decides:
 
 - `expr`: a CEL predicate. A repository can except a finding, but cannot add ways to pass.
-- `outcome`: an outcome rule. It names a result and lists the known ways of reaching it, its *satisfiers*; the first that holds passes the rule and is reported as the evidence. A repository adds its own way with `accept:` ([writing rules](writing-rules.md#outcome-rules-satisfiers-without-go)).
+- `outcome`: an outcome rule. It names a result and lists the known ways of reaching it, its *satisfiers*; the first that holds passes the rule and is reported as the evidence. A repository adds its own way with `accept:` ([writing rules](writing-rules.md#outcome-rules-satisfiers-partials-and-accept)).
 - `capability`: one requirement that each stack meets with its own tools. `lint/configured` is implemented by `lint/configured/go`, `lint/configured/python` and so on, each an `expr` or `outcome` rule with its own page. Every implementation that runs must pass. Selecting, overriding or excepting the capability reaches every implementation, and `accept:` reaches its outcome implementations; an implementation id adjusts one stack. The [capability matrix](rules/capabilities.md) shows which stack implements which ([writing rules](writing-rules.md#capabilities-one-requirement-one-implementation-per-stack)).
 - `capability by artifact`: a capability implemented per kind of published artifact instead of per stack. Each image, package or set of release files is checked on its own ([artifacts](rules/capabilities.md#artifacts)).
 - `go`: written in Go inside fleetlint. Only `quality/check-passes`, which runs the repository's code.
