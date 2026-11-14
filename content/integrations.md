@@ -11,7 +11,7 @@ description: "Git hooks, CI, pull-request comments, coding agents and editors."
 ```yaml
 repos:
   - repo: https://github.com/fleetlint/fleetlint
-    rev: v0.10.2
+    rev: v0.11.0
     hooks:
       - id: fleetlint
 ```
@@ -39,7 +39,7 @@ Either hook fetches remote catalogs like any run, and fails with exit 2 when one
 ```yaml
 - uses: fleetlint/action@v0.1.0   # or its commit SHA
   with:
-    version: v0.10.2              # the fleetlint release to run
+    version: v0.11.0              # the fleetlint release to run
     fail-on: warning
     sarif-file: fleetlint.sarif
 - uses: github/codeql-action/upload-sarif@v4   # GitHub only; shows findings in the Security tab
@@ -63,7 +63,7 @@ Pull request runs and other branches only check, so one workflow serves both. Th
 
 | Input | Default | Meaning |
 |---|---|---|
-| `version` | the release the action version was cut with (v0.1.0: `v0.9.0`) | the fleetlint release to install, such as `v0.10.2`, or `latest`; `pr` needs v0.9.0 or newer |
+| `version` | the release the action version was cut with (v0.1.0: `v0.9.0`) | the fleetlint release to install, such as `v0.11.0`, or `latest`; `pr` needs v0.9.0 or newer |
 | `fail-on` | `error` | the lowest severity that fails the step: `error`, `warning`, `info` or `never` |
 | `path` | `.` | the repository root to check, relative to the workspace |
 | `annotations` | `auto` | annotate every finding on the run and, on pull requests, on the changed files: `true`, `false`, or `auto` (on GitHub only) |
@@ -83,7 +83,7 @@ The [fleetlint component](https://github.com/fleetlint/gitlab-components) for th
 include:
   - component: gitlab.com/fleetlint/components/fleetlint@0.1.0
     inputs:
-      version: v0.10.2
+      version: v0.11.0
       fail-on: warning
       pr: true
 ```
@@ -112,7 +112,7 @@ A component can only be included from the instance it is published on. On a self
 include:
   - remote: https://raw.githubusercontent.com/fleetlint/gitlab-components/0.1.0/templates/fleetlint.yml
     inputs:
-      version: v0.10.2
+      version: v0.11.0
 ```
 
 The older job, `include: remote: https://raw.githubusercontent.com/fleetlint/fleetlint/<tag>/ci/gitlab/fleetlint.yml`, is the component without inputs and without `pr` (variables `FLEETLINT_FAIL_ON`, `FLEETLINT_VERIFY`); up to 0.8.1 it fails on every run (the Code Quality step). Use the component.
@@ -195,7 +195,7 @@ On Gitea and Forgejo, post the same file through the API's issue comments endpoi
 ## Editors
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/fleetlint/fleetlint/v0.10.2/internal/config/schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fleetlint/fleetlint/v0.11.0/internal/config/schema.json
 version: 1
 ```
 
@@ -203,8 +203,8 @@ The first line gives completion and validation in editors with the YAML language
 
 | File | Schema |
 |---|---|
-| `.fleetlint.yaml` | `https://raw.githubusercontent.com/fleetlint/fleetlint/v0.10.2/internal/config/schema.json` |
-| a catalog | `https://raw.githubusercontent.com/fleetlint/fleetlint/v0.10.2/internal/catalog/catalog.schema.json` |
-| a sources file | `https://raw.githubusercontent.com/fleetlint/fleetlint/v0.10.2/internal/catalog/sources.schema.json` |
+| `.fleetlint.yaml` | `https://raw.githubusercontent.com/fleetlint/fleetlint/v0.11.0/internal/config/schema.json` |
+| a catalog | `https://raw.githubusercontent.com/fleetlint/fleetlint/v0.11.0/internal/catalog/catalog.schema.json` |
+| a sources file | `https://raw.githubusercontent.com/fleetlint/fleetlint/v0.11.0/internal/catalog/sources.schema.json` |
 
 `fleetlint schema` prints the first; `fleetlint schema catalog` and `fleetlint schema sources` print the others.

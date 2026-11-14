@@ -89,7 +89,7 @@ catalogs in the order they applied (a later one adjusts an earlier one within it
 1  ./acme.yaml      acme   acme@0.1.0             file in the repository  -          1 rule
 2  .fleetlint.yaml  repo   .fleetlint.yaml@local  file in the repository  -          nothing
 
-fleetlint v0.10.2, catalog v0.7.0
+fleetlint v0.11.0, catalog v0.8.0
 ```
 
 With it, the rule passes and `check` exits 0; `-v` lists passing rules too. The file need not be committed.

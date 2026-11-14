@@ -76,8 +76,8 @@ exceptions:
 ```text
 catalogs in the order they applied (a later one adjusts an earlier one within its policy):
 #  catalog                                                                       label          name                          pinned by               builds on  contributes
-1  fleetlint:minimal                                                             preset         fleetlint-minimal@v0.7.0      sha256-33d37c0e…        -          8 rules
-2  fleetlint:recommended                                                         preset         fleetlint-recommended@v0.7.0  sha256-f3b48ac7…        #1         306 rules
+1  fleetlint:minimal                                                             preset         fleetlint-minimal@v0.8.0      sha256-9ffa1b74…        -          8 rules
+2  fleetlint:recommended                                                         preset         fleetlint-recommended@v0.8.0  sha256-f3b48ac7…        #1         306 rules
 3  org = https://standards.example.com/org.yaml#sha256-545f8823…                 org            acme@3.2.0                    sha256-545f8823…        -          3 rules, 2 overrides
 4  team/platform = https://standards.example.com/platform.yaml#sha256-0e4c2f48…  team/platform  acme-platform@3.2.0           sha256-0e4c2f48…        #3         1 rule
 5  .fleetlint.yaml                                                               repo           .fleetlint.yaml@local         file in the repository  -          1 override, 2 exceptions
