@@ -6,7 +6,7 @@ description: "The traces careless or generated code leaves behind, and the rule 
 
 # Slop catalog
 
-The traces careless or generated code leaves behind. Experienced reviewers notice them within minutes, and most of them predict real bugs. Each entry names the rule that finds it, or says that it is a review item.
+The traces careless or generated code leaves behind. Each entry names the rule that finds it, or says that it is a review item. Severity and preset of each rule are in the [rule catalog](rule-catalog.md#slop-traces-of-careless-or-generated-code).
 
 The rules are in three places. `fleetlint:minimal` carries `slop/conflict-markers`; `fleetlint:recommended` adds the other three that are never acceptable in a commit (`slop/focused-tests`, `slop/scratch-scripts`, `slop/report-documents`). The preset `fleetlint:slop` carries the heuristics, and the two rules about agent traces in public repositories (`public/no-agent-files`, `public/no-ai-attribution`): add it next to another preset.
 
@@ -34,7 +34,7 @@ The heuristics are regular expressions over tracked source files (vendored, gene
 | Smell | Why it matters | Rule / clean up |
 |---|---|---|
 | Variant copies: `fetchDataV2`, `parseNew`, `handlerFixed`, `utils_old.py`, `Foo copy.ts` | two code paths, one of them wrong; fixes land in only one | `slop/variant-names`, `slop/variant-files`. Change the original, update callers, delete the copy |
-| Near-duplicate functions across files | the same bug in several places | review; the stack's duplication tool |
+| Near-duplicate functions across files | the same bug in several places | the stack's duplication detector finds them; `quality/duplication-gate` checks that one runs |
 | `utils` / `helpers` / `common` / `misc` dumping grounds | no owner, grows forever, hidden coupling | `slop/dumping-ground-files`. Move each function to the module that owns its concept |
 | Pass-through layers that only delegate; single-implementation interfaces without a test seam | indirection without meaning | review. Collapse layers that add nothing |
 | Arbitrary sleeps and retry loops around flaky behaviour | hides race conditions; slow and still flaky | `slop/arbitrary-delays`. Await the real event, fix the ordering |
@@ -59,10 +59,11 @@ The heuristics are regular expressions over tracked source files (vendored, gene
 
 | Smell | Why it matters | Rule / clean up |
 |---|---|---|
-| Assertion-free tests, `expect(true)`, tests that only check "no exception" | coverage without protection | `slop/trivial-asserts`; mutation testing exposes the rest |
+| Constant assertions: `expect(true).toBe(true)`, `assert True` | coverage without protection | `slop/trivial-asserts` (constant assertions only) |
+| Assertion-free tests, tests that only check "no exception" | coverage without protection | review; mutation testing exposes them, and `quality/mutation-gate` checks that it runs |
 | Mocking the unit under test, or re-implementing its logic to compute the expected value | the test cannot fail | review. Fakes only at outer boundaries; hard-code expected values |
 | Expected values changed to match buggy output | the bug is locked in | review of test diffs |
-| Skipped tests (`.skip`, `@Ignore`, `t.Skip`) | silent gaps | `slop/skipped-tests`. A quarantined test references an issue |
+| Skipped tests (`it.skip(`, `xit`, `@Ignore`, `#[ignore]`, `@pytest.mark.skip`) | silent gaps | `slop/skipped-tests`; conditional skips (`t.Skip`, `skipif`) are review. A quarantined test references an issue |
 | Focused tests (`.only`, `fit`) | disables the rest of the suite | `slop/focused-tests` (error) |
 | Sleep-based timing in tests | flaky | review. Fake clocks, wait for conditions |
 
@@ -72,26 +73,27 @@ The heuristics are regular expressions over tracked source files (vendored, gene
 |---|---|---|
 | Invented or typo-squatted package names | supply-chain attacks target exactly these | review of every new dependency: exists, maintained, right publisher |
 | A dependency for a few lines of code; several libraries for the same job | attack surface and churn | review |
-| Forked or vendored copies without documentation | cannot be patched | review. Document upstream, base version and changes, or switch back |
+| Forked dependencies without documentation | cannot be patched | `deps/forks-documented` (forks and git sources in the manifest). Document upstream, base version and changes, or switch back |
+| Vendored copies without documentation | cannot be patched | review. Document them the same way |
 | Missing lockfile | unreproducible builds | `repo/lockfile-committed` |
 
 ## Repository and files
 
 | Smell | Why it matters | Rule / clean up |
 |---|---|---|
-| Junk files: `.DS_Store`, `*.bak`, `*.orig`, `*.log`, build output | noise; sometimes leaks data | `repo/no-tracked-junk` |
+| Junk files: `.DS_Store`, `*.bak`, `*.orig`, `*.log`, `__pycache__/`, `node_modules/` | noise; sometimes leaks data | `repo/no-tracked-junk`; build output belongs in `.gitignore` |
 | Scratch scripts in the root: `fix_imports.py`, `debug-auth.js`, `tmp_check.sh` | unmaintained code paths | `slop/scratch-scripts`. Real tools go in `scripts/` |
 | Report documents: `IMPLEMENTATION_SUMMARY.md`, `FIXES.md`, `REFACTORING_PLAN.md`, `NEXT_STEPS.md` | always stale | `slop/report-documents` |
 | Tracked `.env` files, keys, tokens | credential leak | `repo/no-tracked-env`, `hooks/secret-scan`. Rotate what leaked |
-| Agent instruction files in public repositories (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursorrules`, `.windsurfrules`, `.clinerules`, `.aider*`, `.claude/`, `.cursor/`) | a public repository shows what its maintainers wrote | `public/no-agent-files` |
+| Agent instruction files in public repositories (`CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursorrules`, `.windsurfrules`, `.clinerules`, `.aider*`, `.claude/`, `.agent/`, `.cursor/`) | a public repository shows what its maintainers wrote | `public/no-agent-files` |
 | Merge conflict markers | the file means what neither side intended | `slop/conflict-markers` (error) |
-| Lint rules disabled in configuration to get green | hides real bugs | review. Ratchet with a baseline instead |
+| Lint rules disabled in configuration to get green | hides real bugs | `lint/strict` reports the stack's required checks when they are off; the rest is review. Ratchet with a baseline instead |
 
 ## Documentation
 
 | Smell | Why it matters | Rule / clean up |
 |---|---|---|
-| Marketing filler: seamless, blazing fast, cutting-edge, leverage, delve (the list is in the rule) | says nothing a reader can act on | `slop/marketing-words` (Markdown outside code blocks and CHANGELOG.md) |
+| Marketing filler (the words are listed on [the rule's page](rules/slop--marketing-words.md)) | says nothing a reader can act on | `slop/marketing-words` (Markdown outside code blocks and CHANGELOG.md) |
 | Emoji headings | break anchors and search | `slop/emoji-headings` |
 | Feature lists the code does not implement; badges for services that do not exist | misleading | review. Every claim is true today |
 | Overview, Conclusion and Summary filler; the same content in several files | walls of text nobody reads | review. One place per fact |
