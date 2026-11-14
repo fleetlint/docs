@@ -104,6 +104,12 @@ disableKinds = ["taxonomy", "term", "RSS"]
   weight = 44
 
 [[menu.main]]
+  name = "CLI reference"
+  parent = "customization"
+  pageRef = "/cli-reference"
+  weight = 45
+
+[[menu.main]]
   name = "Extension"
   identifier = "extension"
   weight = 50
