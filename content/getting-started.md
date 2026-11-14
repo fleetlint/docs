@@ -142,7 +142,7 @@ writes one report for all of them. See [fleet mode](fleet.md).
 | Forge | Token | Host | In CI |
 |---|---|---|---|
 | GitHub | `GITHUB_TOKEN` or `GH_TOKEN` | github.com; GitHub Enterprise Server: `--forge github:<host>` or `GITHUB_API_URL` | GitHub Actions: the job's `GITHUB_TOKEN` and `GITHUB_API_URL` |
-| Gitea, Forgejo, Codeberg | `GITEA_TOKEN` | `--pr` trusts the remote's own host; `init` and [fleet mode](fleet.md) ask only hosts named in `GITEA_HOST` | Gitea and Forgejo Actions: the job's `GITHUB_TOKEN`, `GITHUB_SERVER_URL` and `GITHUB_API_URL` |
+| Gitea, Forgejo, Codeberg | `GITEA_TOKEN` | `--pr` trusts the remote's own host; `init` and [fleet mode](fleet.md#forges-and-tokens) ask only hosts named in `GITEA_HOST` | Gitea and Forgejo Actions: the job's `GITHUB_TOKEN`, `GITHUB_SERVER_URL` and `GITHUB_API_URL` |
 | GitLab | `GITLAB_TOKEN` | gitlab.com; another instance as with Gitea, but named in `GITLAB_HOST` | GitLab CI: `CI_SERVER_HOST` and `CI_API_V4_URL`; the job token cannot open merge requests, so `GITLAB_TOKEN` or `--token` |
 
 - `--token` or `FLEETLINT_TOKEN` (the variable keeps it out of the process list) replaces the forge's own variable, and goes to that forge only.

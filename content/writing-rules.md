@@ -155,6 +155,8 @@ A rule that does not load stops the run before any rule is checked, with exit 2 
 
 A git catalog pinned to a tag loads, but its `rules/` and `templates/` do not: the run warns on stderr that they are ignored and to pin a full commit SHA.
 
+[Troubleshooting](troubleshooting.md) has the repository and policy errors, with what to change.
+
 ## Catalog format
 
 ```yaml

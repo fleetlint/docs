@@ -6,7 +6,7 @@ description: "The errors fleetlint stops with, their exact messages, and what to
 
 # Troubleshooting
 
-The errors on this page are configuration errors: fleetlint stops before any rule runs and exits with 2. Each message names the file, and a YAML error the line and column. The visibility notes under [forges](#visibility-left-undetected) are warnings. The [exit codes](getting-started.md#exit-codes) say what the other codes mean.
+The errors on this page are configuration errors: fleetlint stops before any rule runs and exits with 2. Each message names the file, and a YAML error the line and column. The visibility notes under [forges](#visibility-left-undetected) are warnings. The [exit codes](getting-started.md#exit-codes) say what the other codes mean. Errors in a rule's own expressions are listed under [writing rules](writing-rules.md#when-the-configuration-does-not-load).
 
 ## The repository's configuration
 
