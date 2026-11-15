@@ -35,7 +35,7 @@ Every [release](https://github.com/fleetlint/fleetlint/releases) carries archive
 
 `curl ... | FLEETLINT_VERIFY=cosign sh` makes the signature required.
 
-The release image `ghcr.io/fleetlint/fleetlint` is signed with cosign and runs on a checkout mounted at `/repo`. It is not public yet: pulling it needs access to the fleetlint organisation's packages.
+The release image `ghcr.io/fleetlint/fleetlint` is signed with cosign and runs on a checkout mounted at `/repo`.
 
 ```sh
 docker run --rm -v "$PWD:/repo" ghcr.io/fleetlint/fleetlint check
