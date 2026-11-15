@@ -37,9 +37,8 @@ Either hook fetches remote catalogs like any run, and fails with exit 2 when one
 ## GitHub Actions and Gitea Actions
 
 ```yaml
-- uses: fleetlint/action@v0.1.0   # or its commit SHA
+- uses: fleetlint/action@v0.2.0   # or its commit SHA
   with:
-    version: v0.11.0              # the fleetlint release to run
     fail-on: warning
     sarif-file: fleetlint.sarif
 - uses: github/codeql-action/upload-sarif@v4   # GitHub only; shows findings in the Security tab
@@ -48,9 +47,9 @@ Either hook fetches remote catalogs like any run, and fails with exit 2 when one
     sarif_file: fleetlint.sarif
 ```
 
-[fleetlint/action](https://github.com/fleetlint/action) installs the release binary (checked against `checksums.txt`, and against its cosign signature when `cosign` is on PATH), annotates every finding on its file and line, writes the report into the job summary and fails the step at `fail-on`. No Go toolchain needed. Without `version` it installs the fleetlint release the action version was cut with: v0.1.0 installs fleetlint v0.9.0, whose onboarding pull request lists the stacks as a comment instead of under `scopes:`. Set `version` to the release you run locally (see [Versions](#versions)).
+[fleetlint/action](https://github.com/fleetlint/action) installs the release binary (checked against `checksums.txt`, and against its cosign signature when `cosign` is on PATH), annotates every finding on its file and line, writes the report into the job summary and fails the step at `fail-on`. No Go toolchain needed. Without `version` it installs the fleetlint release the action version was cut with: v0.2.0 installs fleetlint v0.11.0, v0.1.0 installed v0.9.0. Set `version` to the release you run locally (see [Versions](#versions)).
 
-Gitea and Forgejo run it by its full URL, `uses: https://github.com/fleetlint/action@v0.1.0` (Forgejo resolves a short `uses:` against its own actions instance), on a runner with `bash`, `curl` and `tar`. The report goes into the job summary, which Forgejo shows from v17 with runner v13.2; annotations are off by default there (`annotations: auto`), since neither forge shows them, and there is no code scanning to upload SARIF to. Tested on Forgejo 17 with runner 13.2; Gitea runs the same steps but is not tested.
+Gitea and Forgejo run it by its full URL, `uses: https://github.com/fleetlint/action@v0.2.0` (Forgejo resolves a short `uses:` against its own actions instance), on a runner with `bash`, `curl` and `tar`. The report goes into the job summary, which Forgejo shows from v17 with runner v13.2; annotations are off by default there (`annotations: auto`), since neither forge shows them, and there is no code scanning to upload SARIF to. Tested on Forgejo 17 with runner 13.2; Gitea runs the same steps but is not tested.
 
 Every run checks. With `pr: true`, a run of the default branch also proposes changes on the repository it runs in, with the run's token:
 
@@ -63,7 +62,7 @@ Pull request runs and other branches only check, so one workflow serves both. Th
 
 | Input | Default | Meaning |
 |---|---|---|
-| `version` | the release the action version was cut with (v0.1.0: `v0.9.0`) | the fleetlint release to install, such as `v0.11.0`, or `latest`; `pr` needs v0.9.0 or newer |
+| `version` | the release the action version was cut with (v0.2.0: `v0.11.0`) | the fleetlint release to install, such as `v0.11.0`, or `latest`; `pr` needs v0.9.0 or newer |
 | `fail-on` | `error` | the lowest severity that fails the step: `error`, `warning`, `info` or `never` |
 | `path` | `.` | the repository root to check, relative to the workspace |
 | `annotations` | `auto` | annotate every finding on the run and, on pull requests, on the changed files: `true`, `false`, or `auto` (on GitHub only) |
@@ -81,14 +80,13 @@ The [fleetlint component](https://github.com/fleetlint/gitlab-components) for th
 
 ```yaml
 include:
-  - component: gitlab.com/fleetlint/components/fleetlint@0.1.0
+  - component: gitlab.com/fleetlint/components/fleetlint@0.2.0
     inputs:
-      version: v0.11.0
       fail-on: warning
       pr: true
 ```
 
-- Without `version`, a component version installs the fleetlint release it was cut with (0.1.0: fleetlint v0.9.0), with that release's install script, and requires the cosign signature of its checksums.
+- Without `version`, a component version installs the fleetlint release it was cut with (0.2.0: fleetlint v0.11.0; 0.1.0: v0.9.0), with that release's install script, and requires the cosign signature of its checksums.
 - Every run reports the findings in the merge request's Code Quality widget, keeps `fleetlint.json` as an artifact and fails at `fail-on`.
 - With `pr: true`, a pipeline of the default branch also opens or updates a merge request, as the action does: the onboarding configuration when the project has none (not gated), else the mechanical fixes. Other branches and merge request pipelines only check; a pipeline schedule keeps the fixes current between pushes.
 - The job token cannot push or open merge requests, so `pr: true` needs `FLEETLINT_TOKEN`: a project access token with the `api` and `write_repository` scopes and the Developer role, as a masked CI/CD variable.
@@ -97,7 +95,7 @@ include:
 
 | Input | Default | Meaning |
 |---|---|---|
-| `version` | the release the component version was cut with (0.1.0: `v0.9.0`) | the fleetlint release to install, as `vX.Y.Z`; `pr` needs v0.9.0 or newer |
+| `version` | the release the component version was cut with (0.2.0: `v0.11.0`) | the fleetlint release to install, as `vX.Y.Z`; `pr` needs v0.9.0 or newer |
 | `fail-on` | `error` | the lowest severity that fails the job: `error`, `warning`, `info` or `never`; a project being onboarded is not gated |
 | `pr` | `false` | on pipelines of the default branch, open or update the onboarding or fixes merge request |
 | `path` | `.` | the directory to check, relative to the project |
@@ -110,9 +108,9 @@ A component can only be included from the instance it is published on. On a self
 
 ```yaml
 include:
-  - remote: https://raw.githubusercontent.com/fleetlint/gitlab-components/0.1.0/templates/fleetlint.yml
+  - remote: https://raw.githubusercontent.com/fleetlint/gitlab-components/0.2.0/templates/fleetlint.yml
     inputs:
-      version: v0.11.0
+      fail-on: warning
 ```
 
 The older job, `include: remote: https://raw.githubusercontent.com/fleetlint/fleetlint/<tag>/ci/gitlab/fleetlint.yml`, is the component without inputs and without `pr` (variables `FLEETLINT_FAIL_ON`, `FLEETLINT_VERIFY`); up to 0.8.1 it fails on every run (the Code Quality step). Use the component.
@@ -123,7 +121,9 @@ The packages (Homebrew, Scoop, Nix, the Linux packages, the image, `install.sh`)
 
 | Integration | Installs by default | `pr` needs |
 |---|---|---|
+| action v0.2.0 | fleetlint v0.11.0 | fleetlint 0.9.0 |
 | action v0.1.0 | fleetlint v0.9.0 | fleetlint 0.9.0 |
+| GitLab component 0.2.0 | fleetlint v0.11.0 | fleetlint 0.9.0 |
 | GitLab component 0.1.0 | fleetlint v0.9.0 | fleetlint 0.9.0 |
 
 ## What the CI rules read
