@@ -95,7 +95,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
-      - run: curl --proto '=https' --tlsv1.2 -fsSL https://fleetlint.org/install.sh | sh -s -- v0.11.0
+      - run: curl --proto '=https' --tlsv1.2 -fsSL https://fleetlint.org/install.sh | sh -s -- v0.11.1
       - run: ~/.local/bin/fleetlint check --require org
 ```
 

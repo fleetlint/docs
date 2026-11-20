@@ -14,7 +14,7 @@ The quickest way on Linux and macOS is the install script. It needs only `curl`,
 curl --proto '=https' --tlsv1.2 -fsSL https://fleetlint.org/install.sh | sh
 ```
 
-It installs the latest release into `~/.local/bin` and says so when that directory is not on `PATH`. A version and a directory can be given: `curl ... | sh -s -- v0.11.0 ~/bin`. The script is served from this site and is the one of the release these pages describe; to read it first, `curl -fsSL https://fleetlint.org/install.sh | less`.
+It installs the latest release into `~/.local/bin` and says so when that directory is not on `PATH`. A version and a directory can be given: `curl ... | sh -s -- v0.11.1 ~/bin`. The script is served from this site and is the one of the release these pages describe; to read it first, `curl -fsSL https://fleetlint.org/install.sh | less`.
 
 With a package manager:
 

@@ -11,7 +11,7 @@ description: "Git hooks, CI, pull-request comments, coding agents and editors."
 ```yaml
 repos:
   - repo: https://github.com/fleetlint/fleetlint
-    rev: v0.11.0
+    rev: v0.11.1
     hooks:
       - id: fleetlint
 ```
@@ -62,7 +62,7 @@ Pull request runs and other branches only check, so one workflow serves both. Th
 
 | Input | Default | Meaning |
 |---|---|---|
-| `version` | the release the action version was cut with (v0.2.0: `v0.11.0`) | the fleetlint release to install, such as `v0.11.0`, or `latest`; `pr` needs v0.9.0 or newer |
+| `version` | the release the action version was cut with (v0.2.0: `v0.11.0`) | the fleetlint release to install, such as `v0.11.1`, or `latest`; `pr` needs v0.9.0 or newer |
 | `fail-on` | `error` | the lowest severity that fails the step: `error`, `warning`, `info` or `never` |
 | `path` | `.` | the repository root to check, relative to the workspace |
 | `annotations` | `auto` | annotate every finding on the run and, on pull requests, on the changed files: `true`, `false`, or `auto` (on GitHub only) |
@@ -195,7 +195,7 @@ On Gitea and Forgejo, post the same file through the API's issue comments endpoi
 ## Editors
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/fleetlint/fleetlint/v0.11.0/internal/config/schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fleetlint/fleetlint/v0.11.1/internal/config/schema.json
 version: 1
 ```
 
@@ -203,8 +203,8 @@ The first line gives completion and validation in editors with the YAML language
 
 | File | Schema |
 |---|---|
-| `.fleetlint.yaml` | `https://raw.githubusercontent.com/fleetlint/fleetlint/v0.11.0/internal/config/schema.json` |
-| a catalog | `https://raw.githubusercontent.com/fleetlint/fleetlint/v0.11.0/internal/catalog/catalog.schema.json` |
-| a sources file | `https://raw.githubusercontent.com/fleetlint/fleetlint/v0.11.0/internal/catalog/sources.schema.json` |
+| `.fleetlint.yaml` | `https://raw.githubusercontent.com/fleetlint/fleetlint/v0.11.1/internal/config/schema.json` |
+| a catalog | `https://raw.githubusercontent.com/fleetlint/fleetlint/v0.11.1/internal/catalog/catalog.schema.json` |
+| a sources file | `https://raw.githubusercontent.com/fleetlint/fleetlint/v0.11.1/internal/catalog/sources.schema.json` |
 
 `fleetlint schema` prints the first; `fleetlint schema catalog` and `fleetlint schema sources` print the others.
