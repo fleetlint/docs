@@ -51,12 +51,12 @@ Standard CEL operators, macros (`all`, `exists`, `exists_one`, `filter`, `map`, 
 
 ## Extension functions
 
-The cel-go extension libraries below are enabled as well; [cel-go's documentation](https://pkg.go.dev/cel.dev/cel-go@v0.33.2/ext) describes each function. A name with a leading dot is called on a value (`"a,b".split(",")`, `[[1], [2]].flatten()`).
+The cel-go extension libraries below are enabled as well; [cel-go's documentation](https://pkg.go.dev/cel.dev/cel-go@v0.33.4/ext) describes each function. A name with a leading dot is called on a value (`"a,b".split(",")`, `[[1], [2]].flatten()`).
 
 | Library | Functions |
 |---|---|
-| [Strings](https://pkg.go.dev/cel.dev/cel-go@v0.33.2/ext#Strings) | `.charAt()`, `.format()`, `.indexOf()`, `.join()`, `.lastIndexOf()`, `.lowerAscii()`, `.replace()`, `.reverse()`, `.split()`, `strings.quote()`, `.substring()`, `.trim()`, `.upperAscii()` |
-| [Lists](https://pkg.go.dev/cel.dev/cel-go@v0.33.2/ext#Lists) | `.distinct()`, `.flatten()`, `.hasAll()`, `.hasAny()`, `.hasExactly()`, `.hasOnly()`, `lists.range()`, `.reverse()`, `.slice()`, `.sort()`, `.sortBy()` |
+| [Strings](https://pkg.go.dev/cel.dev/cel-go@v0.33.4/ext#Strings) | `.charAt()`, `.format()`, `.indexOf()`, `.join()`, `.lastIndexOf()`, `.lowerAscii()`, `.replace()`, `.reverse()`, `.split()`, `strings.quote()`, `.substring()`, `.trim()`, `.upperAscii()` |
+| [Lists](https://pkg.go.dev/cel.dev/cel-go@v0.33.4/ext#Lists) | `.distinct()`, `.flatten()`, `.hasAll()`, `.hasAny()`, `.hasExactly()`, `.hasOnly()`, `lists.range()`, `.reverse()`, `.slice()`, `.sort()`, `.sortBy()` |
 
 ---
 
